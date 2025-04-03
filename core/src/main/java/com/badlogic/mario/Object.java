@@ -14,6 +14,7 @@ public class Object {
     Rectangle objectRectangle;
     /* Delay entre uma gota e outra. */
     float objectTimer;
+    float objectSpeed;
 
     TextureRegion[][] spriteRegions;
     private static final int FRAME_WIDTH = 30;  // Largura de cada sprite
@@ -30,8 +31,8 @@ public class Object {
         objectRectangle = new Rectangle();
     }
 
-    public void draw(float delta, SpriteBatch batch) {
-        logic(delta);
+    public void draw(float delta, SpriteBatch batch, boolean aumenta) {
+        logic(delta, aumenta);
         batch.begin();
         /* Desenha cada gota. */
         for (Sprite sprite : objectSprites) {
@@ -40,15 +41,19 @@ public class Object {
         batch.end();
     }
 
-    public void logic(float delta) {
+    public void logic(float delta, boolean aumenta) {
         /* Percorre a lista de gotas removendo a última gota que caiu para que não ocorra erro de memória. */
         for (int i = objectSprites.size - 1; i >= 0; i--) {
             Sprite objectSprite = objectSprites.get(i); // Get the sprite from the list
             float objectWidth = objectSprite.getWidth();
             float objectHeight = objectSprite.getHeight();
             
-            /* Para cada gota ele movimenta ela para baixo. */
-			float objectSpeed = 220;
+            if (aumenta){
+                objectSpeed = 600;
+            } 
+            else {
+                objectSpeed = 200;
+            }
 			objectSprite.translateX(-objectSpeed * delta);
 
             /* Aplica as coordenadas da gota para o retângulo da gota. */

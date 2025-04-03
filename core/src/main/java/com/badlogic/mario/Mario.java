@@ -18,6 +18,7 @@ public class Mario {
     }
 
     private float posX = 10; // Posição inicial do personagem no eixo X
+
     private float posY = 100; // Posição inicial do personagem no eixo Y
     private float widthMario = 150;
     private float heightMario = 200;
@@ -87,7 +88,13 @@ public class Mario {
         // Movimento para a direita
         else if (Gdx.input.isKeyPressed(Input.Keys.RIGHT)) {
             andarDireita(delta, screenWidth);
-            cenario.moverDireita(delta);
+            if (posX == screenWidth * 0.3f) {
+                cenario.moverDireita(delta);
+                cenario.setMoviment(true);
+            }
+            else {
+                cenario.setMoviment(false);
+            }
             currentState = State.WALKING_RIGHT;
             isMoving = true;
         }
@@ -158,7 +165,7 @@ public class Mario {
 
     public void andarDireita(float delta, float screenWidth) {
         // Não pode sair da borda direita
-        posX = Math.min(posX + speed * delta, screenWidth * 0.7f);
+        posX = Math.min(posX + speed * delta, screenWidth * 0.3f);
     }
 
     public void andarEsquerda(float delta, float screenWidth) {

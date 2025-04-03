@@ -9,6 +9,7 @@ public class Cenario {
     private float backgroundWidth = 1920; // Largura do fundo para controle da movimentação
     private float backgroundHeight = 1080; // Altura do fundo (supondo que seja 1080p)
     private Texture background;
+    private boolean moviment = false;
 
     private Object object; // Referência ao objeto
 
@@ -32,7 +33,7 @@ public class Cenario {
 
         batch.end();
         // Desenha o objeto
-        object.draw(delta, batch);
+        object.draw(delta, batch, moviment);
 
     }
 
@@ -52,5 +53,9 @@ public class Cenario {
         if (backgroundPosX <= -backgroundWidth) {
             backgroundPosX = 0;
         }
+    }
+
+    public void setMoviment(boolean moviment) {
+        this.moviment = moviment;
     }
 }
