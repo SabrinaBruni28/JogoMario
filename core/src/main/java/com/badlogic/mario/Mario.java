@@ -21,8 +21,8 @@ public class Mario {
     private float posX = 10; // Posição inicial do personagem no eixo X
     private float posY = HEIGHT_Y; // Posição inicial do personagem no eixo Y
 
-    private float widthMario = 150;
-    private float heightMario = 200;
+    private float widthMario = 130;
+    private float heightMario = 180;
     private float speed = 200; // Velocidade de movimento do personagem (pixels por segundo)
 
     private boolean isJumping = false; // Verifica se o personagem está pulando
@@ -87,6 +87,17 @@ public class Mario {
         else if (posY > screenHeight - heightMario) // Não pode sair da borda superior (200 é a altura do personagem)
             posY = screenHeight - heightMario;
 
+         // Verificar se o personagem deve abaixar
+        if (Gdx.input.isKeyPressed(Input.Keys.DOWN) && !isJumping) {
+            isMoving = true;
+            if (!sideRight)
+                currentState = State.STANDING_DOWN_LEFT;
+            else
+                currentState = State.STANDING_DOWN_RIGHT;
+
+            return;
+        }
+
         // Movimento para a esquerda
         if (Gdx.input.isKeyPressed(Input.Keys.LEFT)) {
             andarEsquerda(delta, screenWidth);
@@ -115,7 +126,6 @@ public class Mario {
             isMoving = true;
         }
 
-
         // Se o personagem não estiver pulando e a tecla de pulo estiver pressionada
         if (Gdx.input.isKeyPressed(Input.Keys.SPACE) && !isJumping) {
             if (!sideRight)
@@ -131,15 +141,6 @@ public class Mario {
 
         // Atualizar a posição vertical com base na velocidade vertical e gravidade
         if (isJumping) pular(delta);
-
-        // Verificar se o personagem deve abaixar
-        else if (Gdx.input.isKeyPressed(Input.Keys.DOWN)) {
-            isMoving = true;
-            if (!sideRight)
-                currentState = State.STANDING_DOWN_LEFT;
-            else
-                currentState = State.STANDING_DOWN_RIGHT;
-        } 
 
         // Se não estiver se movendo, definir o estado como parado
         if (!isMoving) {

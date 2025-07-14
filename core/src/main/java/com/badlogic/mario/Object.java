@@ -1,6 +1,7 @@
 package com.badlogic.mario;
 
 import com.badlogic.gdx.graphics.Texture;
+import com.badlogic.gdx.graphics.g2d.Animation;
 import com.badlogic.gdx.graphics.g2d.Sprite;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 import com.badlogic.gdx.graphics.g2d.TextureRegion;
@@ -9,82 +10,122 @@ import com.badlogic.gdx.math.Rectangle;
 import com.badlogic.gdx.utils.Array;
 
 public class Object {
-    /* Lista das gotas de chuva. */
-    Array<Sprite> objectSprites;
-    Rectangle objectRectangle;
-    /* Delay entre uma gota e outra. */
-    float objectTimer;
-    float objectSpeed;
+    private final Array<Enemy> objectSprites = new Array<>();
+    private final Rectangle objectRectangle = new Rectangle();
 
-    TextureRegion[][] spriteRegions;
-    private static final int FRAME_WIDTH = 30;  // Largura de cada sprite
-    private static final int FRAME_HEIGHT = 30; // Altura de cada sprite
+    private float objectTimer = 0;
+    private float objectSpeed;
+    private float stateTime = 0;
+
+    private static final int FRAME_WIDTH = 30;
+    private static final int FRAME_HEIGHT = 30;
+    private static final int HEIGHT_Y = 172;
+
+    private Animation<TextureRegion> tartarugaAnimation, tartarugaVoadoraAnimation;
+    private TextureRegion[][] spriteRegions;
+
+    enum EnemyType {
+        TARTARUGA,
+        TARTARUGA_VOADORA
+    }
+
+    // Classe interna para associar Sprite e sua animação
+    private class Enemy {
+        Sprite sprite;
+        Animation<TextureRegion> animation;
+
+        Enemy(Sprite sprite, Animation<TextureRegion> animation) {
+            this.sprite = sprite;
+            this.animation = animation;
+        }
+    }
 
     public Object() {
-        // Carregar a folha de sprites
+        // Carrega sprite sheet
         Texture spriteSheet = new Texture("smb_enemies_sheet.png");
-
-        // Dividir a folha de sprites em uma matriz de TextureRegion
         spriteRegions = TextureRegion.split(spriteSheet, FRAME_WIDTH, FRAME_HEIGHT);
 
-        objectSprites = new Array<>();
-        objectRectangle = new Rectangle();
+        // Inicializa animações
+        tartaruga();
+        tartarugaVoadora();
+    }
+
+    private void tartaruga() {
+        tartarugaAnimation = new Animation<>(0.4f, spriteRegions[0][5], spriteRegions[0][6]);
+        tartarugaAnimation.setPlayMode(Animation.PlayMode.LOOP);
+    }
+
+    private void tartarugaVoadora() {
+        tartarugaVoadoraAnimation = new Animation<>(0.4f, spriteRegions[0][3], spriteRegions[0][4]);
+        tartarugaVoadoraAnimation.setPlayMode(Animation.PlayMode.LOOP);
     }
 
     public void draw(float delta, SpriteBatch batch, boolean aumenta) {
         logic(delta, aumenta);
+        stateTime += delta;
+
         batch.begin();
-        /* Desenha cada gota. */
-        for (Sprite sprite : objectSprites) {
-            sprite.draw(batch);
+        for (Enemy enemy : objectSprites) {
+            TextureRegion frame = enemy.animation.getKeyFrame(stateTime, true);
+            enemy.sprite.setRegion(frame);
+            enemy.sprite.draw(batch);
         }
         batch.end();
     }
 
-    public void logic(float delta, boolean aumenta) {
-        /* Percorre a lista de gotas removendo a última gota que caiu para que não ocorra erro de memória. */
+    private void logic(float delta, boolean aumenta) {
         for (int i = objectSprites.size - 1; i >= 0; i--) {
-            Sprite objectSprite = objectSprites.get(i); // Get the sprite from the list
-            float objectWidth = objectSprite.getWidth();
-            float objectHeight = objectSprite.getHeight();
-            
-            if (aumenta){
-                objectSpeed = 600;
-            } 
-            else {
-                objectSpeed = 200;
+            Enemy enemy = objectSprites.get(i);
+            Sprite sprite = enemy.sprite;
+
+            float width = sprite.getWidth();
+
+            objectSpeed = aumenta ? 300f : 100f;
+            sprite.translateX(-objectSpeed * delta);
+
+            objectRectangle.set(sprite.getX(), sprite.getY(), width, sprite.getHeight());
+
+            if (sprite.getX() + width < 0) {
+                objectSprites.removeIndex(i);
             }
-			objectSprite.translateX(-objectSpeed * delta);
-
-            /* Aplica as coordenadas da gota para o retângulo da gota. */
-            objectRectangle.set(objectSprite.getX(), objectSprite.getY(), objectWidth, objectHeight);
-
-            /* Remove a gota se ela tiver passado direto pela tela. */
-            if (objectSprite.getX() < 0) {
-				
-				/* Para fazer um som com quando a gota passa direto. */
-				objectSprites.removeIndex(i);
-			}
         }
 
-        objectTimer += delta; // Adds the current delta to the timer
-        if (objectTimer > 5f) { // Check if it has been more than a second
-            objectTimer = 0; // Reset the timer
-            /* Função que cria uma gota. */
-            createObject(1080, 1920);
+        objectTimer += delta;
+        if (objectTimer > 5f) {
+            objectTimer = 0;
+            createObject(1920);
         }
     }
 
-    private void createObject(float screenWidth, float screenHeight) {
-        // create local variables for convenience
+    private void createObject(float screenWidth) {
         float objectWidth = 100;
         float objectHeight = 120;
-        
-        // create the object sprite
-        Sprite objectSprite = new Sprite(spriteRegions[MathUtils.random(0, 6)][MathUtils.random(0, 13)]);
-        objectSprite.setSize(objectWidth, objectHeight);
-        objectSprite.setX(screenHeight); // Randomize the object's x position
-        objectSprite.setY(160);
-        objectSprites.add(objectSprite); // Add it to the list
+
+        EnemyType tipo = EnemyType.values()[MathUtils.random(EnemyType.values().length - 1)];
+
+        Animation<TextureRegion> anim;
+        float posY;
+
+        switch (tipo) {
+            case TARTARUGA:
+                anim = tartarugaAnimation;
+                posY = HEIGHT_Y;
+                break;
+            case TARTARUGA_VOADORA:
+                anim = tartarugaVoadoraAnimation;
+                posY = HEIGHT_Y + 150;
+                break;
+            default:
+                anim = tartarugaAnimation;
+                posY = HEIGHT_Y;
+        }
+
+        TextureRegion frame = anim.getKeyFrame(0);
+        Sprite newSprite = new Sprite(frame);
+        newSprite.setSize(objectWidth, objectHeight);
+        newSprite.setX(screenWidth); // aparece fora da tela, à direita
+        newSprite.setY(posY);
+
+        objectSprites.add(new Enemy(newSprite, anim));
     }
 }
