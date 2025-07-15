@@ -56,7 +56,7 @@ public class EnemyFactory {
             case BICHO_MARROM:
                 x1 = 0; y1 = 0; x2 = 0; y2 = 1;
                 xMorte = 0; yMorte = 2;
-                posY = HEIGHT_Y;
+                posY = HEIGHT_Y - 20;
                 break;
         }
 

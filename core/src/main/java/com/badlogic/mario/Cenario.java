@@ -1,5 +1,7 @@
 package com.badlogic.mario;
 
+import com.badlogic.gdx.utils.Array;
+
 import com.badlogic.gdx.graphics.Texture;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 import com.badlogic.gdx.math.Rectangle;
@@ -74,7 +76,7 @@ public class Cenario {
                             bicho.iniciarDeslize(!marioEstaADireita); // Tartaruga desliza para lado oposto do Mario
                         }
                     }
-                    else if (mario.getPosY() > bicho.getPosY() + bichoRect.height * 0.5f) {
+                    else if (mario.getVelocidadeY() < 0 && mario.getBoundingBox().y > bicho.getBoundingBox().y + bicho.getBoundingBox().height * 0.5f) {
                         mario.bounce();
                         bicho.morrer();
                     } 
@@ -84,6 +86,43 @@ public class Cenario {
                 }
             }
         }
-}
+    }
 
+    public void verificarColisaoEnemys() {
+        Array<Bicho> bichos = enemys.getBichos();
+
+        for (int i = 0; i < bichos.size; i++) {
+            Bicho bichoDeslizando = bichos.get(i);
+
+            if (!bichoDeslizando.isAtivo()) {
+                enemys.removeEmeny(i);
+                i--; // Ajusta o índice após remover
+                continue;
+            }
+
+            if (bichoDeslizando.isDeslizando() && bichoDeslizando.isAtivo()) {
+
+                Rectangle deslizandoRect = bichoDeslizando.getBoundingBox();
+
+                if (bichoDeslizando.getVelocidadeDeslizamento() == 0) {
+                    bichoDeslizando.pararDeslize(); 
+                    continue;
+                }
+
+                for (int j = 0; j < bichos.size; j++) {
+                    if (i == j) continue;
+
+                    Bicho outroBicho = bichos.get(j);
+
+                    if (outroBicho.isAtivo() && !outroBicho.isMorto()) {
+                        Rectangle outroRect = outroBicho.getBoundingBox();
+
+                        if (deslizandoRect.overlaps(outroRect)) {
+                            outroBicho.matar();
+                        }
+                    }
+                }
+            }
+        }
+    }
 }

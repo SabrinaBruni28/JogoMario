@@ -41,6 +41,10 @@ public class Enemys {
         bichos.add(novoBicho);
     }
 
+    public void removeEmeny(int index) {
+        bichos.removeIndex(index);
+    }
+
     public Array<Bicho> getBichos() {
         return bichos;
     }

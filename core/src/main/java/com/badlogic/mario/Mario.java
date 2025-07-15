@@ -244,6 +244,10 @@ public class Mario {
         }
     }
 
+    public float getVelocidadeY() {
+        return velocityY;
+    }
+
     public float getPosX() {
         return posX;
     }

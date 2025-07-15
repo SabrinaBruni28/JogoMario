@@ -32,11 +32,17 @@ public class Bicho {
 
     private TextureRegion morteFrame;
     private boolean morto = false;
+    private boolean matar = false;
     private float tempoMorte = 0f;
     private static final float TEMPO_MORTE = 0.5f; // tempo visível após morrer
 
     private boolean deslizando = false;
     private float velocidadeDeslizamento = 0f;
+
+    private boolean pulando = false;
+    private float velocidadeY = 0;
+    private static final float GRAVIDADE = -800f;
+    private static final float FORCA_PULO = 400f;
 
     public Bicho(
         int x1, int y1, int x2, int y2,
@@ -77,21 +83,48 @@ public class Bicho {
     }
 
     public void update(float delta) {
-        if (morto) {
+        if (matar) {
+            if (pulando) {
+                velocidadeY += GRAVIDADE * delta;
+                enemy.sprite.translateY(velocidadeY * delta);
+
+                // Quando cair abaixo do chão, termina o pulo e remove
+                if (enemy.sprite.getY() <= HEIGHT_Y - 25) {
+                    enemy.sprite.setY(HEIGHT_Y - 25);
+                    pulando = false;
+                    tempoMorte += delta;
+                }
+            } else {
+                tempoMorte += delta;
+                if (tempoMorte >= TEMPO_MORTE) {
+                    ativo = false;
+                    deslizando = false;
+                }
+            }
+        }
+
+        else if (morto) {
             tempoMorte += delta;
             if (isTartaruga()) {
                 if (!deslizando) {
-                    enemy.sprite.setRotation(45);
-                } 
-                else {
-                    // desliza
+                    // parado
+                } else {
                     enemy.sprite.translateX(velocidadeDeslizamento * delta);
+
+                    // Atualizar o retângulo de colisão
+                    objectRectangle.set(
+                        enemy.sprite.getX(),
+                        enemy.sprite.getY(),
+                        enemy.sprite.getWidth(),
+                        enemy.sprite.getHeight()
+                    );
                 }
             }
-            else if (tempoMorte >= TEMPO_MORTE && !deslizando) {
+            else if (tempoMorte >= TEMPO_MORTE) {
                 ativo = false; // some só se estiver morto parado
+                deslizando = false;
             }
-        } 
+        }
         else {
             stateTime += delta;
             logic(delta);
@@ -146,8 +179,10 @@ public class Bicho {
         // Limite da tela
         if (horizontal && sprite.getX() + sprite.getWidth() < end) {
             ativo = false;
+            deslizando = false;
         } else if (!horizontal && sprite.getY() + sprite.getHeight() < end) {
             ativo = false;
+            deslizando = false;
         }
     }
 
@@ -155,7 +190,16 @@ public class Bicho {
         morto = true;
         deslizando = false;
         tempoMorte = 0;
-        enemy.sprite.setY(HEIGHT_Y - 20);
+        enemy.sprite.setY(HEIGHT_Y - 25);
+        enemy.sprite.setRegion(morteFrame);
+    }
+
+    public void matar() {
+        matar = true;
+        morto = true;
+        tempoMorte = 0.2f;
+        pulando = true;
+        velocidadeY = FORCA_PULO; // começa o pulo
         enemy.sprite.setRegion(morteFrame);
     }
 
@@ -169,6 +213,11 @@ public class Bicho {
 
     public boolean isDeslizando() {
         return deslizando;
+    }
+
+    public void pararDeslize() {
+        deslizando = false;
+        velocidadeDeslizamento = 0;
     }
 
     public boolean isMorto() {
@@ -189,6 +238,10 @@ public class Bicho {
 
     public Rectangle getBoundingBox() {
         return objectRectangle;
+    }
+
+    public float getVelocidadeDeslizamento() {
+        return velocidadeDeslizamento;
     }
 
     public boolean isType(EnemyType tipo) {

@@ -32,6 +32,7 @@ public class FirstScreen implements Screen {
     public void render(float delta) {
         input(delta);
         cenario.verificarColisao(mario);
+        cenario.verificarColisaoEnemys();
         draw(delta);
     }
 
