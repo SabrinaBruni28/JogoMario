@@ -31,6 +31,7 @@ public class FirstScreen implements Screen {
     @Override
     public void render(float delta) {
         input(delta);
+        cenario.verificarColisao(mario);
         draw(delta);
     }
 

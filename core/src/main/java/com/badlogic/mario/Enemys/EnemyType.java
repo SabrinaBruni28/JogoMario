@@ -1,0 +1,11 @@
+package com.badlogic.mario.Enemys;
+
+public enum EnemyType {
+    TARTARUGA_VERDE,
+    TARTARUGA_VERMELHA,
+    TARTARUGA_AZUL,
+    TARTARUGA_VOADORA_VERDE,
+    TARTARUGA_VOADORA_VERMELHA,
+    TARTARUGA_VOADORA_AZUL,
+    BICHO_MARROM
+}

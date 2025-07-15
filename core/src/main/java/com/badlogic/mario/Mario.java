@@ -6,6 +6,7 @@ import com.badlogic.gdx.graphics.Texture;
 import com.badlogic.gdx.graphics.g2d.Animation;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 import com.badlogic.gdx.graphics.g2d.TextureRegion;
+import com.badlogic.gdx.math.Rectangle;
 
 public class Mario {
     private float stateTime = 0f; // Tempo de estado da animação
@@ -30,6 +31,15 @@ public class Mario {
     private float gravity = -800f; // Aceleração da gravidade (negativa porque puxa para baixo)
     private float jumpHeight = 400f; // A altura do pulo
     private boolean sideRight = true;
+
+    private boolean invincible = false;       // Está no estado invencível?
+    private float invincibleTime = 0f;        // Tempo que ele já está invencível
+    private static final float INVINCIBLE_DURATION = 2f; // Duração total da invencibilidade em segundos
+
+    private float blinkInterval = 0.1f;       // Intervalo de piscar (a cada 0.1s ele alterna)
+    private float blinkTimer = 0f;            // Timer para controlar o piscar
+    private boolean visible = true;           // Se está visível ou não no frame atual
+    private boolean isKilling = false;
 
     private State currentState = State.STANDING_RIGHT; // Estado atual do personagem
     private Animation<TextureRegion> standRightAnimation, standLeftAnimation;
@@ -79,82 +89,88 @@ public class Mario {
         boolean isMoving = false;
         if (isJumping) isMoving = true;
 
-        // Verificar se o personagem saiu dos limites da tela e ajustar a posição
-        
-        if (posY < 100) // Não pode sair da borda inferior
+        // Limites da tela
+        if (posY < 100)
             posY = 100;
-
-        else if (posY > screenHeight - heightMario) // Não pode sair da borda superior (200 é a altura do personagem)
+        else if (posY > screenHeight - heightMario)
             posY = screenHeight - heightMario;
 
-         // Verificar se o personagem deve abaixar
+        // Abaixar
         if (Gdx.input.isKeyPressed(Input.Keys.DOWN) && !isJumping) {
             isMoving = true;
             if (!sideRight)
                 currentState = State.STANDING_DOWN_LEFT;
             else
                 currentState = State.STANDING_DOWN_RIGHT;
-
             return;
         }
 
-        // Movimento para a esquerda
+        // Movimento para a esquerda (pode mover mesmo pulando)
         if (Gdx.input.isKeyPressed(Input.Keys.LEFT)) {
             andarEsquerda(delta, screenWidth);
-            if (isJumping)
-                currentState = State.JUMPING_LEFT;
-            else
-                currentState = State.WALKING_LEFT;
+            currentState = isJumping ? State.JUMPING_LEFT : State.WALKING_LEFT;
             isMoving = true;
         }
 
-        // Movimento para a direita
+        // Movimento para a direita (pode mover mesmo pulando)
         else if (Gdx.input.isKeyPressed(Input.Keys.RIGHT)) {
             andarDireita(delta, screenWidth);
+
             if (posX == screenWidth * 0.3f) {
                 cenario.moverDireita(delta);
                 cenario.setMoviment(true);
-            }
-            else {
+            } else {
                 cenario.setMoviment(false);
             }
 
-            if (isJumping)
-                currentState = State.JUMPING_RIGHT;
-            else
-                currentState = State.WALKING_RIGHT;
+            currentState = isJumping ? State.JUMPING_RIGHT : State.WALKING_RIGHT;
             isMoving = true;
+        } else {
+            cenario.setMoviment(false);
         }
 
-        // Se o personagem não estiver pulando e a tecla de pulo estiver pressionada
+        // Pular
         if (Gdx.input.isKeyPressed(Input.Keys.SPACE) && !isJumping) {
-            if (!sideRight)
-                currentState = State.JUMPING_LEFT;
-            else
-                currentState = State.JUMPING_RIGHT;
-            
-            velocityY = jumpHeight; // Inicia o pulo
+            currentState = sideRight ? State.JUMPING_RIGHT : State.JUMPING_LEFT;
+            velocityY = jumpHeight;
             isJumping = true;
             isMoving = true;
             pular(delta);
         }
 
-        // Atualizar a posição vertical com base na velocidade vertical e gravidade
+        // Atualiza pulo (aplica gravidade)
         if (isJumping) pular(delta);
 
-        // Se não estiver se movendo, definir o estado como parado
-        if (!isMoving) {
-            if (sideRight) {
-                currentState = State.STANDING_RIGHT;
-            } 
-            else {
-                currentState = State.STANDING_LEFT;
-            }
+        // Se não se move horizontalmente e não pula, fica parado
+        if (!isMoving && !isJumping) {
+            currentState = sideRight ? State.STANDING_RIGHT : State.STANDING_LEFT;
         }
     }
 
     public void draw(SpriteBatch batch) {
-        stateTime += Gdx.graphics.getDeltaTime(); // Atualizar tempo de estado
+        float delta = Gdx.graphics.getDeltaTime();
+
+        if (invincible) {
+            invincibleTime += delta;
+            blinkTimer += delta;
+
+            if (blinkTimer >= blinkInterval) {
+                blinkTimer = 0f;
+                visible = !visible; // Alterna visibilidade para efeito piscar
+            }
+
+            if (invincibleTime >= INVINCIBLE_DURATION) {
+                invincible = false; // Acabou a invencibilidade
+                visible = true; // Garantir que termine visível
+            }
+        } else {
+            visible = true;
+        }
+
+        if (!visible) return; // Se invisível, não desenha (piscar)
+        
+        // ... seu código normal para escolher currentFrame e desenhar
+        stateTime += delta;
 
         // Selecionar o frame atual com base no estado
         TextureRegion currentFrame = null;
@@ -223,8 +239,48 @@ public class Mario {
         if (posY <= HEIGHT_Y) {
             posY = HEIGHT_Y; // Garante que o personagem não passe do chão
             isJumping = false; // O pulo foi finalizado
+            isKilling = false;
             velocityY = 0f; // Reseta a velocidade vertical
         }
+    }
+
+    public float getPosX() {
+        return posX;
+    }
+
+    public float getPosY() {
+        return posY;
+    }
+
+    public void setKilling(boolean killing) {
+        this.isKilling = killing;
+    }
+
+    public boolean isKilling() {
+        return isKilling;
+    }
+
+    public void takeDamage() {
+        if (invincible) return; // Se já estiver invencível, ignora
+
+        System.out.println("Mario tomou dano!");
+        invincible = true;
+        invincibleTime = 0f;
+        blinkTimer = 0f;
+        visible = false; // Começa invisível para efeito piscar
+        // Aqui você pode também reduzir vida, ativar sons, etc.
+    }
+
+
+    public void bounce() {
+        // Faz o Mario pular levemente ao matar inimigo (efeito clássico)
+        velocityY = jumpHeight / 2; // impulso menor para pulo rápido
+        isJumping = true;
+        isKilling = true;
+    }
+
+    public Rectangle getBoundingBox() {
+        return new Rectangle(posX, posY, widthMario, heightMario);
     }
 }
  
