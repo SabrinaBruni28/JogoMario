@@ -2,6 +2,7 @@ package com.badlogic.mario;
 
 import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.Input;
+import com.badlogic.gdx.audio.Sound;
 import com.badlogic.gdx.graphics.Texture;
 import com.badlogic.gdx.graphics.g2d.Animation;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
@@ -47,7 +48,13 @@ public class Mario {
     private Animation<TextureRegion> walkRightAnimation, walkLeftAnimation;
     private Animation<TextureRegion> jumpingLeftAnimation, jumpingRightAnimation;
 
+    private Sound somPulando, somPulandoBicho;
+
     public Mario() {
+
+        somPulando = Gdx.audio.newSound(Gdx.files.internal("Sounds/jump.mp3"));
+        somPulandoBicho = Gdx.audio.newSound(Gdx.files.internal("Sounds/stomp.mp3"));
+
         // Carregar a folha de sprites
         spriteSheet = new Texture("smb_mario_sheet.png");
 
@@ -131,6 +138,8 @@ public class Mario {
 
         // Pular
         if (Gdx.input.isKeyPressed(Input.Keys.SPACE) && !isJumping) {
+            long id = somPulando.play(); // Retorna o ID do som tocando
+            somPulando.setVolume(id, 0.1f);
             currentState = sideRight ? State.JUMPING_RIGHT : State.JUMPING_LEFT;
             velocityY = jumpHeight;
             isJumping = true;
@@ -278,6 +287,7 @@ public class Mario {
 
     public void bounce() {
         // Faz o Mario pular levemente ao matar inimigo (efeito clássico)
+        somPulandoBicho.play();
         velocityY = jumpHeight / 2; // impulso menor para pulo rápido
         isJumping = true;
         isKilling = true;

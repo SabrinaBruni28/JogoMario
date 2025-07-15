@@ -1,7 +1,9 @@
 package com.badlogic.mario;
 
 import com.badlogic.gdx.utils.Array;
-
+import com.badlogic.gdx.Gdx;
+import com.badlogic.gdx.audio.Music;
+import com.badlogic.gdx.audio.Sound;
 import com.badlogic.gdx.graphics.Texture;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 import com.badlogic.gdx.math.Rectangle;
@@ -17,10 +19,27 @@ public class Cenario {
     private boolean moviment = false;
 
     public Enemys enemys; // Referência ao objeto
+    private Music musicaDeFundo;
+    private Sound somMoeda, somDano;
 
     public Cenario() {
         background = new Texture("cenario.jpg");
         enemys = new Enemys(); // Criar o objeto, posicionado inicialmente à direita
+
+        setMusica();
+        setSounds();
+    }
+
+    private void setMusica(){
+        musicaDeFundo = Gdx.audio.newMusic(Gdx.files.internal("Sounds/music.mp3"));
+        musicaDeFundo.setLooping(true); // toca em loop
+        musicaDeFundo.setVolume(0.5f); // volume entre 0 e 1
+        musicaDeFundo.play();
+    }
+
+    private void setSounds() {
+        somMoeda = Gdx.audio.newSound(Gdx.files.internal("Sounds/coin.mp3"));
+        somDano = Gdx.audio.newSound(Gdx.files.internal("Sounds/coin.mp3"));
     }
 
     public void dispose() {
@@ -72,6 +91,7 @@ public class Cenario {
                 if (!mario.isKilling()) {
                     if (bicho.isMorto()) {
                         if (bicho.isTartaruga()) {
+                            mario.bounce();
                             boolean marioEstaADireita = mario.getPosX() > bicho.getPosX();
                             bicho.iniciarDeslize(!marioEstaADireita); // Tartaruga desliza para lado oposto do Mario
                         }
