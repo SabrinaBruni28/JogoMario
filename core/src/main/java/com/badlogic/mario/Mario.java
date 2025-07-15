@@ -28,9 +28,9 @@ public class Mario {
     private float speed = 200; // Velocidade de movimento do personagem (pixels por segundo)
 
     private boolean isJumping = false; // Verifica se o personagem está pulando
-    private float velocityY = 2f; // Velocidade vertical do personagem
-    private float gravity = -800f; // Aceleração da gravidade (negativa porque puxa para baixo)
-    private float jumpHeight = 400f; // A altura do pulo
+    private float velocityY = 3f; // Velocidade vertical do personagem
+    private float gravity = -900f; // Aceleração da gravidade (negativa porque puxa para baixo)
+    private float jumpHeight = 600f; // A altura do pulo
     private boolean sideRight = true;
 
     private boolean invincible = false;       // Está no estado invencível?
@@ -276,14 +276,12 @@ public class Mario {
     public void takeDamage() {
         if (invincible) return; // Se já estiver invencível, ignora
 
-        System.out.println("Mario tomou dano!");
         invincible = true;
         invincibleTime = 0f;
         blinkTimer = 0f;
         visible = false; // Começa invisível para efeito piscar
         // Aqui você pode também reduzir vida, ativar sons, etc.
     }
-
 
     public void bounce() {
         // Faz o Mario pular levemente ao matar inimigo (efeito clássico)
@@ -294,7 +292,15 @@ public class Mario {
     }
 
     public Rectangle getBoundingBox() {
-        return new Rectangle(posX, posY, widthMario, heightMario);
+        float marginX = 6f; // reduz largura em 12px no total
+        float marginY = 4f; // reduz altura em 8px no total
+
+        return new Rectangle(
+            posX + marginX,
+            posY + marginY,
+            widthMario - marginX * 2,
+            heightMario - marginY * 2
+        );
     }
 }
  

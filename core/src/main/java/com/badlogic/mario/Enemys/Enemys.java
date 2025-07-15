@@ -9,7 +9,7 @@ public class Enemys {
     private float objectTimer = 0;
 
     public void draw(float delta, SpriteBatch batch, boolean aumenta) {
-        float speed = aumenta ? 300f : 100f;
+        float speed = aumenta ? 400f : 100f;
 
         for (int i = bichos.size - 1; i >= 0; i--) {
             Bicho bicho = bichos.get(i);

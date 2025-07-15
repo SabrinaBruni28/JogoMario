@@ -1,5 +1,7 @@
 package com.badlogic.mario.Enemys;
 
+import com.badlogic.gdx.Gdx;
+import com.badlogic.gdx.audio.Sound;
 import com.badlogic.gdx.graphics.Texture;
 import com.badlogic.gdx.graphics.g2d.Animation;
 import com.badlogic.gdx.graphics.g2d.Sprite;
@@ -44,6 +46,8 @@ public class Bicho {
     private static final float GRAVIDADE = -800f;
     private static final float FORCA_PULO = 400f;
 
+    private Sound somMatando;
+
     public Bicho(
         int x1, int y1, int x2, int y2,
         int xMorte, int yMorte,
@@ -58,6 +62,8 @@ public class Bicho {
     ) {
         // Carrega sprite sheet e configura animação
         this.tipo = tipo;
+
+        somMatando = Gdx.audio.newSound(Gdx.files.internal("Sounds/kick.wav"));
 
         Texture spriteSheet = new Texture("smb_enemies_sheet.png");
         spriteRegions = TextureRegion.split(spriteSheet, FRAME_WIDTH, FRAME_HEIGHT);
@@ -195,6 +201,7 @@ public class Bicho {
     }
 
     public void matar() {
+        somMatando.play();
         matar = true;
         morto = true;
         tempoMorte = 0.2f;
@@ -237,6 +244,15 @@ public class Bicho {
     }
 
     public Rectangle getBoundingBox() {
+        float marginX = 10f; // Reduz 10px de cada lado (horizontal)
+        float marginY = 5f;  // Reduz 5px de cada lado (vertical)
+
+        objectRectangle.set(
+            enemy.sprite.getX() + marginX,
+            enemy.sprite.getY() + marginY,
+            enemy.sprite.getWidth() - marginX * 2,
+            enemy.sprite.getHeight() - marginY * 2
+        );
         return objectRectangle;
     }
 
