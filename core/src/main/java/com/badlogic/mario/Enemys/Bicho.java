@@ -117,6 +117,14 @@ public class Bicho {
 
         else if (morto) {
             tempoMorte += delta;
+            velocidadeY += GRAVIDADE * delta;
+            enemy.sprite.translateY(velocidadeY * delta);
+
+            // Quando cair abaixo do chão, termina o pulo e remove
+            if (enemy.sprite.getY() <= HEIGHT_Y - 25) {
+                enemy.sprite.setY(HEIGHT_Y - 25);
+                pulando = false;
+            }
             if (isTartaruga()) {
                 if (!deslizando) {
                     // parado
@@ -202,10 +210,10 @@ public class Bicho {
     }
 
     public void morrer() {
+        somMatando.play();
         morto = true;
         deslizando = false;
         tempoMorte = 0;
-        enemy.sprite.setY(HEIGHT_Y - 25);
         enemy.sprite.setRegion(morteFrame);
     }
 
@@ -253,8 +261,8 @@ public class Bicho {
     }
 
     public Rectangle getBoundingBox() {
-        float marginX = 10f; // Reduz 10px de cada lado (horizontal)
-        float marginY = 5f;  // Reduz 5px de cada lado (vertical)
+        float marginX = 12f; // Reduz 10px de cada lado (horizontal)
+        float marginY = 10f;  // Reduz 5px de cada lado (vertical)
 
         objectRectangle.set(
             enemy.sprite.getX() + marginX,

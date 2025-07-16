@@ -96,6 +96,12 @@ public class Mario {
         boolean isMoving = false;
         if (isJumping) isMoving = true;
 
+        boolean temSuporte = cenario.verificarSuporte(this);
+        if (!isJumping && !temSuporte && posY > HEIGHT_Y) {
+            setJumping(true); // Caiu de plataforma
+        }
+
+
         // Limites da tela
         if (posY < 100)
             posY = 100;
@@ -185,32 +191,26 @@ public class Mario {
         TextureRegion currentFrame = null;
         switch (currentState) {
             case STANDING_RIGHT:
-                posY = HEIGHT_Y;
                 currentFrame = standRightAnimation.getKeyFrame(stateTime, false);
                 sideRight = true;
                 break;
             case STANDING_LEFT:
-                posY = HEIGHT_Y;
                 currentFrame = standLeftAnimation.getKeyFrame(stateTime, false);
                 sideRight = false;
                 break;
             case STANDING_DOWN_RIGHT:
-                posY = HEIGHT_Y - 25;
                 currentFrame = standDownRightAnimation.getKeyFrame(stateTime, false);
                 sideRight = true;
                 break;
             case STANDING_DOWN_LEFT:
-                posY = HEIGHT_Y - 25;
                 currentFrame = standDownLeftAnimation.getKeyFrame(stateTime, false);
                 sideRight = false;
                 break;
             case WALKING_RIGHT:
-                posY = HEIGHT_Y;
                 currentFrame = walkRightAnimation.getKeyFrame(stateTime, true);
                 sideRight = true;
                 break;
             case WALKING_LEFT:
-                posY = HEIGHT_Y;
                 currentFrame = walkLeftAnimation.getKeyFrame(stateTime, true);
                 sideRight = false;
                 break;
@@ -253,16 +253,16 @@ public class Mario {
         }
     }
 
-    public float getVelocidadeY() {
-        return velocityY;
-    }
-
     public float getPosX() {
         return posX;
     }
 
     public float getPosY() {
         return posY;
+    }
+
+    public void setJumping(boolean isJumping) {
+        this.isJumping = isJumping;
     }
 
     public void setKilling(boolean killing) {
@@ -292,8 +292,8 @@ public class Mario {
     }
 
     public Rectangle getBoundingBox() {
-        float marginX = 6f; // reduz largura em 12px no total
-        float marginY = 4f; // reduz altura em 8px no total
+        float marginX = 12f; // reduz largura em 12px no total
+        float marginY = 10f; // reduz altura em 8px no total
 
         return new Rectangle(
             posX + marginX,
@@ -302,5 +302,31 @@ public class Mario {
             heightMario - marginY * 2
         );
     }
+
+    public float getVelocidadeY() {
+        return velocityY; // ou a variável que controla a gravidade/salto
+    }
+
+    public void pararQueda(float yPisandoEmCima) {
+        this.posY = yPisandoEmCima - 5;
+        this.velocityY = 0; // ou o que quer que controle a gravidade
+        this.isJumping = false;
+        if (this.sideRight)
+            this.currentState = State.STANDING_RIGHT;
+        else 
+            this.currentState = State.STANDING_LEFT;
+    }
+    public void pararSubida(float yBatendoPorBaixo) {
+        this.posY = yBatendoPorBaixo;
+    }
+
+    public void bloquearDireita(float novaPosX) {
+        this.posX = novaPosX;
+    }
+
+    public void bloquearEsquerda(float novaPosX) {
+        this.posX = novaPosX;
+    }
+
 }
  

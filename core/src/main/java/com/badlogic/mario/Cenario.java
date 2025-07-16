@@ -9,6 +9,7 @@ import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 import com.badlogic.gdx.math.Rectangle;
 import com.badlogic.mario.Enemys.Bicho;
 import com.badlogic.mario.Enemys.Enemys;
+import com.badlogic.mario.Items.Item;
 import com.badlogic.mario.Items.ItemType;
 import com.badlogic.mario.Items.Items;
 
@@ -24,7 +25,7 @@ public class Cenario {
     public Items items;
 
     private Music musicaDeFundo;
-    private Sound somMoeda, somDano;
+    private Sound somMoeda, somBatendo;
 
     public Cenario() {
         background = new Texture("cenario.jpg");
@@ -44,7 +45,7 @@ public class Cenario {
 
     private void setSounds() {
         somMoeda = Gdx.audio.newSound(Gdx.files.internal("Sounds/coin.mp3"));
-        somDano = Gdx.audio.newSound(Gdx.files.internal("Sounds/coin.mp3"));
+        somBatendo = Gdx.audio.newSound(Gdx.files.internal("Sounds/kick.wav"));
     }
 
     public void dispose() {
@@ -151,4 +152,101 @@ public class Cenario {
             }
         }
     }
+
+    public void verificarColisaoComItens(Mario mario) {
+        Rectangle marioRect = mario.getBoundingBox();
+
+        for (int i = 0; i < items.getItens().size; i++) {
+            Item item = items.getItens().get(i);
+
+            if (!item.isAtivo()) continue;
+
+            Rectangle itemRect = item.getBoundingBox();
+
+            if (marioRect.overlaps(itemRect)) {
+                ItemType tipo = item.getTipo();
+                boolean vindoDaDireita = mario.getPosX() < itemRect.x &&
+                    marioRect.x + marioRect.width > itemRect.x;
+                boolean vindoDaEsquerda = mario.getPosX() > itemRect.x &&
+                    marioRect.x < itemRect.x + itemRect.width;
+                boolean vindoPorBaixo = mario.getVelocidadeY() > 0 &&
+                    marioRect.y + marioRect.height <= itemRect.y + 15f;
+                boolean vindoPorCima = mario.getVelocidadeY() <= 0 &&
+                    marioRect.y > itemRect.y + itemRect.height * 0.5f;
+
+                switch (tipo) {
+                    case MOEDA:
+                        item.coletar();
+                        somMoeda.play();
+                        // talvez adicionar pontuação
+                        break;
+
+                    case BLOCO:
+                    case BLOCO_TIJOLO:
+                        if (vindoPorBaixo) {
+                            mario.pararSubida(itemRect.y - marioRect.height);
+                            somBatendo.play();
+                        } 
+                        else if (vindoPorCima) {
+                            mario.pararQueda(itemRect.y + itemRect.height);
+                        }
+                        else if (vindoDaDireita) {
+                            mario.bloquearDireita(itemRect.x - marioRect.width);
+                        } 
+                        else if (vindoDaEsquerda) {
+                            mario.bloquearEsquerda(itemRect.x + itemRect.width);
+                        }
+                        break;
+
+                    case CANO_VERDE:
+                    case CANO_AMARELO:
+                        if (vindoPorBaixo) {
+                            mario.pararSubida(itemRect.y - marioRect.height);
+                            somBatendo.play();
+                        } 
+                        if (vindoPorCima) {
+                            mario.pararQueda(itemRect.y + itemRect.height);
+                        }
+                        else if (vindoDaDireita) {
+                            mario.bloquearDireita(itemRect.x - marioRect.width);
+                        } 
+                        else if (vindoDaEsquerda) {
+                            mario.bloquearEsquerda(itemRect.x + itemRect.width);
+                        }
+                        break;
+                    // Adicione mais reações aqui...
+
+                    default:
+                        break;
+                }
+            }
+        }
+    }
+
+    public boolean verificarSuporte(Mario mario) {
+        Rectangle marioRect = mario.getBoundingBox();
+
+        // Checa se há algum item logo abaixo do Mario
+        for (Item item : items.getItens()) {
+            if (!item.isAtivo()) continue;
+
+            Rectangle itemRect = item.getBoundingBox();
+
+            // Considera como suporte se a parte inferior do Mario estiver tocando ou quase tocando o item
+            float margem = 10f; // tolerância para contato com chão
+            boolean estaSobreItem = 
+                marioRect.y > itemRect.y + itemRect.height - margem &&
+                marioRect.y < itemRect.y + itemRect.height + margem &&
+                marioRect.x + marioRect.width > itemRect.x &&
+                marioRect.x < itemRect.x + itemRect.width;
+
+            if (estaSobreItem) {
+                return true;
+            }
+        }
+
+        // Se nenhum item suporta o Mario, retorna false
+        return false;
+    }
+
 }

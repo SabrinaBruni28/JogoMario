@@ -3,6 +3,7 @@ package com.badlogic.mario.Items;
 import com.badlogic.gdx.graphics.g2d.Animation;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 import com.badlogic.gdx.graphics.g2d.TextureRegion;
+import com.badlogic.gdx.math.Rectangle;
 import com.badlogic.mario.Object;
 
 public class Item {
@@ -52,5 +53,18 @@ public class Item {
 
     public ItemType getTipo() {
         return tipo;
+    }
+
+    // Adicione no Item.java
+    public Rectangle getBoundingBox() {
+        float marginX = 12f; // reduz largura em 12px no total
+        float marginY = 10f; // reduz altura em 8px no total
+
+        return new Rectangle(
+            itemObject.sprite.getX() + marginX,
+            itemObject.sprite.getY() + marginY,
+            itemObject.sprite.getWidth() - marginX * 2,
+            itemObject.sprite.getHeight() - marginY * 2
+        );
     }
 }

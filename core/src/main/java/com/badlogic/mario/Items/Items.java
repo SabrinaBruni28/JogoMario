@@ -27,7 +27,7 @@ public class Items {
         ItemType tipo = ItemType.values()[MathUtils.random(ItemType.values().length - 1)];
 
         float x = MathUtils.random(100, 700); // posição aleatória
-        float y = MathUtils.random(HEIGHT_Y, 1000);
+        float y = MathUtils.random(HEIGHT_Y, 300);
 
         Item novoItem = ItemFactory.createItem(tipo, x, y);
         itens.add(novoItem);
@@ -35,7 +35,7 @@ public class Items {
 
     public void addItem(ItemType tipo) {
         float x = MathUtils.random(100, 700);
-        float y = MathUtils.random(HEIGHT_Y, 800);
+        float y = MathUtils.random(HEIGHT_Y, 300);
 
         Item novoItem = ItemFactory.createItem(tipo, x, y);
         itens.add(novoItem);
