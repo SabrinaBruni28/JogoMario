@@ -8,6 +8,7 @@ import com.badlogic.gdx.graphics.g2d.Sprite;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 import com.badlogic.gdx.graphics.g2d.TextureRegion;
 import com.badlogic.gdx.math.Rectangle;
+import com.badlogic.mario.Object;
 
 public class Bicho {
     private final Rectangle objectRectangle = new Rectangle();
@@ -21,6 +22,7 @@ public class Bicho {
     private float alturaDeSubida;
     private boolean jaSubiu = false;
     private boolean ativo = true;
+    private boolean andandoParaDireita = false;
 
     private EnemyType tipo;
 
@@ -30,7 +32,7 @@ public class Bicho {
 
     private Animation<TextureRegion> animation;
     private TextureRegion[][] spriteRegions;
-    private Enemy enemy;
+    private Object enemy;
 
     private TextureRegion morteFrame;
     private boolean morto = false;
@@ -56,16 +58,18 @@ public class Bicho {
         float end,
         float speed,
         boolean sobeNoPonto,
+        boolean andandoParaDireita,
         float pontoDeSubida,
         float alturaDeSubida,
-        EnemyType tipo
+        EnemyType tipo,
+        String arquivo
     ) {
         // Carrega sprite sheet e configura animação
         this.tipo = tipo;
 
         somMatando = Gdx.audio.newSound(Gdx.files.internal("Sounds/kick.wav"));
 
-        Texture spriteSheet = new Texture("smb_enemies_sheet.png");
+        Texture spriteSheet = new Texture(arquivo);
         spriteRegions = TextureRegion.split(spriteSheet, FRAME_WIDTH, FRAME_HEIGHT);
         animation = new Animation<>(0.4f, spriteRegions[x1][y1], spriteRegions[x2][y2]);
         animation.setPlayMode(Animation.PlayMode.LOOP);
@@ -77,7 +81,7 @@ public class Bicho {
         Sprite sprite = new Sprite(animation.getKeyFrame(0));
         sprite.setSize(100, 120);
         sprite.setPosition(startX, startY);
-        this.enemy = new Enemy(sprite, animation);
+        this.enemy = new Object(sprite, animation);
 
         // Armazena parâmetros de lógica
         this.horizontal = horizontal;
@@ -86,6 +90,8 @@ public class Bicho {
         this.sobeNoPonto = sobeNoPonto;
         this.pontoDeSubida = pontoDeSubida;
         this.alturaDeSubida = alturaDeSubida;
+        this.andandoParaDireita = andandoParaDireita;
+
     }
 
     public void update(float delta) {
@@ -148,14 +154,14 @@ public class Bicho {
         if (!ativo) return;
 
         batch.begin();
-        if (!morto) {
-            TextureRegion frame = animation.getKeyFrame(stateTime, true);
-            enemy.sprite.setRegion(frame);
-        } 
-        else {
-            enemy.sprite.setRegion(morteFrame);
-        }
-        enemy.sprite.draw(batch);
+            if (!morto) {
+                TextureRegion frame = animation.getKeyFrame(stateTime, true);
+                enemy.sprite.setRegion(frame);
+            } 
+            else {
+                enemy.sprite.setRegion(morteFrame);
+            }
+            enemy.sprite.draw(batch);
         batch.end();
     }
 
@@ -164,9 +170,12 @@ public class Bicho {
         float deslocamento = speed * delta;
 
         if (horizontal) {
-            sprite.translateX(-deslocamento);
-        } else {
-            sprite.translateY(-deslocamento);
+            float direcao = andandoParaDireita ? 1f : -1f;
+            sprite.translateX(direcao * deslocamento);
+        }
+        else {
+            float direcao = andandoParaDireita ? 1f : -1f;
+            sprite.translateY(direcao * deslocamento);
         }
 
         objectRectangle.set(sprite.getX(), sprite.getY(), sprite.getWidth(), sprite.getHeight());
@@ -265,10 +274,17 @@ public class Bicho {
     }
 
     public boolean isTartaruga() {
-        if (isType(EnemyType.TARTARUGA_AZUL) || isType(EnemyType.TARTARUGA_VERDE) || isType(EnemyType.TARTARUGA_VERMELHA)) 
+        if (
+            isType(EnemyType.TARTARUGA_AZUL_L) || isType(EnemyType.TARTARUGA_VERDE_L) || isType(EnemyType.TARTARUGA_VERMELHA_L) ||
+            isType(EnemyType.TARTARUGA_AZUL_R) || isType(EnemyType.TARTARUGA_VERDE_R) || isType(EnemyType.TARTARUGA_VERMELHA_R)
+        ) 
             return true;
         
-        if (isType(EnemyType.TARTARUGA_VOADORA_AZUL) || isType(EnemyType.TARTARUGA_VOADORA_VERDE) || isType(EnemyType.TARTARUGA_VOADORA_VERMELHA)) 
+        if (
+            isType(EnemyType.TARTARUGA_VOADORA_AZUL_L) || isType(EnemyType.TARTARUGA_VOADORA_VERDE_L) || isType(EnemyType.TARTARUGA_VOADORA_VERMELHA_L) ||
+            isType(EnemyType.TARTARUGA_VOADORA_AZUL_R) || isType(EnemyType.TARTARUGA_VOADORA_VERDE_R) || isType(EnemyType.TARTARUGA_VOADORA_VERMELHA_R)
+            
+        )
             return true;
         
         return false;

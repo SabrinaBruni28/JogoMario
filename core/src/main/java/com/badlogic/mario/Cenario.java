@@ -9,6 +9,8 @@ import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 import com.badlogic.gdx.math.Rectangle;
 import com.badlogic.mario.Enemys.Bicho;
 import com.badlogic.mario.Enemys.Enemys;
+import com.badlogic.mario.Items.ItemType;
+import com.badlogic.mario.Items.Items;
 
 public class Cenario {
     private float backgroundPosX = 0; // Posição do fundo (cenário) no eixo X
@@ -18,13 +20,16 @@ public class Cenario {
     private Texture background;
     private boolean moviment = false;
 
-    public Enemys enemys; // Referência ao objeto
+    public Enemys enemys;
+    public Items items;
+
     private Music musicaDeFundo;
     private Sound somMoeda, somDano;
 
     public Cenario() {
         background = new Texture("cenario.jpg");
-        enemys = new Enemys(); // Criar o objeto, posicionado inicialmente à direita
+        enemys = new Enemys(); 
+        items = new Items();
 
         setMusica();
         setSounds();
@@ -58,6 +63,7 @@ public class Cenario {
         batch.end();
         // Desenha o objeto
         enemys.draw(delta, batch, moviment);
+        items.draw(delta, batch, moviment);
     }
 
     public void moverEsquerda(float delta, float screenWidth) {
