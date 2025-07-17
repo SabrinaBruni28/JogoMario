@@ -8,7 +8,9 @@ import com.badlogic.gdx.graphics.g2d.Sprite;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 import com.badlogic.gdx.graphics.g2d.TextureRegion;
 import com.badlogic.gdx.math.Rectangle;
+import com.badlogic.mario.Cenario;
 import com.badlogic.mario.Object;
+import com.badlogic.mario.Items.Item;
 
 public class Bicho {
     private final Rectangle objectRectangle = new Rectangle();
@@ -23,6 +25,7 @@ public class Bicho {
     private boolean jaSubiu = false;
     private boolean ativo = true;
     private boolean andandoParaDireita = false;
+    private boolean emSuporte = false;
 
     private EnemyType tipo;
 
@@ -94,7 +97,7 @@ public class Bicho {
 
     }
 
-    public void update(float delta) {
+    public void update(float delta, Cenario cenario) {
         if (matar) {
             if (pulando) {
                 velocidadeY += GRAVIDADE * delta;
@@ -117,18 +120,43 @@ public class Bicho {
 
         else if (morto) {
             tempoMorte += delta;
-            velocidadeY += GRAVIDADE * delta;
-            enemy.sprite.translateY(velocidadeY * delta);
-
-            // Quando cair abaixo do chão, termina o pulo e remove
-            if (enemy.sprite.getY() <= HEIGHT_Y - 25) {
-                enemy.sprite.setY(HEIGHT_Y - 25);
-                pulando = false;
+            
+            if (enemy.sprite.getY() > HEIGHT_Y - 25 || velocidadeY != 0) {
+                boolean suporteChao = !deslizando && enemy.sprite.getY() <= HEIGHT_Y - 25;
+                boolean suporteItem = !deslizando && !suporteChao && cenario.verificarSuporteBicho(this);
+                
+                if (!emSuporte) {
+                    if (suporteItem) {
+                        alinharComTopoDoItem(cenario);
+                        emSuporte = true;
+                        velocidadeY = 0;
+                    }
+                    else if (suporteChao) {
+                        emSuporte = false;
+                        enemy.sprite.setY(HEIGHT_Y - 25);
+                        velocidadeY = 0;
+                    } 
+                    
+                    else {
+                        emSuporte = false;
+                        velocidadeY += GRAVIDADE * delta;
+                        enemy.sprite.translateY(velocidadeY * delta);
+                    }
+                // Atualizar o retângulo de colisão
+                objectRectangle.set(
+                    enemy.sprite.getX(),
+                    enemy.sprite.getY(),
+                    enemy.sprite.getWidth(),
+                    enemy.sprite.getHeight()
+                );
+                }
             }
+
             if (isTartaruga()) {
                 if (!deslizando) {
                     // parado
-                } else {
+                } 
+                else {
                     enemy.sprite.translateX(velocidadeDeslizamento * delta);
 
                     // Atualizar o retângulo de colisão
@@ -148,6 +176,34 @@ public class Bicho {
         else {
             stateTime += delta;
             logic(delta);
+        }
+    }
+
+    private void alinharComTopoDoItem(Cenario cenario) {
+        Rectangle bichoRect = getBoundingBox();
+        float baseDoBicho = bichoRect.y;
+
+        for (Item item : cenario.getItems().getItens()) {
+            if (!item.isAtivo()) continue;
+
+            Rectangle itemRect = item.getBoundingBox();
+            float topoDoItem = itemRect.y + itemRect.height;
+
+            float margem = 2f;
+            boolean alinhadoHorizontalmente =
+                bichoRect.x + bichoRect.width > itemRect.x &&
+                bichoRect.x < itemRect.x + itemRect.width;
+
+            boolean tocandoEmCima =
+                Math.abs(baseDoBicho - topoDoItem) <= margem;
+
+            if (alinhadoHorizontalmente && tocandoEmCima) {
+                // Seta a Y do sprite para o topo do item
+                float novaY = topoDoItem;
+                enemy.sprite.setY(novaY);
+                emSuporte = true;
+                return;
+            }
         }
     }
 
@@ -252,8 +308,16 @@ public class Bicho {
         return enemy.sprite.getX();
     }
 
+    public void setPosX(float posX) {
+        enemy.sprite.setX(posX);
+    }
+
     public float getPosY() {
         return enemy.sprite.getY();
+    }
+
+    public void setPosY(float posY) {
+        enemy.sprite.setY(posY);
     }
 
     public void setAtivo(boolean ativo) {
@@ -296,5 +360,26 @@ public class Bicho {
             return true;
         
         return false;
+    }
+
+    public void mover(float dx) {
+        enemy.sprite.setX(enemy.sprite.getX() + dx);
+    }
+
+    public Bicho inverterDirecao() {
+        andandoParaDireita = !andandoParaDireita;
+        return inverterTipo(this.speed);
+    }
+
+    public void inverterDeslizamento() {
+        velocidadeDeslizamento = -velocidadeDeslizamento;
+    }
+
+    public Bicho inverterTipo(float speed) {
+        EnemyType tipoInvertido = EnemyFactory.inverterTipo(this.tipo);
+        Bicho invertido = EnemyFactory.create(tipoInvertido, this.getPosX(), speed);
+        invertido.setPosX(getPosX()); // mantém posição
+        invertido.setPosY(getPosY());
+        return invertido;
     }
 }

@@ -9,15 +9,21 @@ public class Items {
     private final Array<Item> itens = new Array<>();
     private float itemTimer = 0;
 
-    public void draw(float delta, SpriteBatch batch, boolean aumenta) {
+    public void draw(float delta, SpriteBatch batch) {
         for (int i = itens.size - 1; i >= 0; i--) {
             Item item = itens.get(i);
-            item.update(delta); // atualiza frame de animação
-            item.draw(batch);   // desenha frame atual
+            
+            if (item.estaForaDaTelaEsquerda()) {
+                itens.removeIndex(i);
+                continue;
+            }
+
+            item.update(delta);
+            item.draw(batch);
         }
 
         itemTimer += delta;
-        if (itemTimer > 5f) {
+        if (itemTimer > 6f) {
             itemTimer = 0;
             spawnItem();
         }
@@ -26,7 +32,7 @@ public class Items {
     private void spawnItem() {
         ItemType tipo = ItemType.values()[MathUtils.random(ItemType.values().length - 1)];
 
-        float x = MathUtils.random(100, 700); // posição aleatória
+        float x = 1920; // posição aleatória
         float y = MathUtils.random(HEIGHT_Y, 300);
 
         Item novoItem = ItemFactory.createItem(tipo, x, y);
@@ -47,5 +53,11 @@ public class Items {
 
     public Array<Item> getItens() {
         return itens;
+    }
+
+    public void mover(float dx) {
+        for (Item item : itens) {
+            item.mover(dx);
+        }
     }
 }

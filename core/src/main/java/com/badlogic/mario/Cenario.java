@@ -36,6 +36,10 @@ public class Cenario {
         setSounds();
     }
 
+    public Items getItems() {
+        return this.items;
+    }
+
     private void setMusica(){
         musicaDeFundo = Gdx.audio.newMusic(Gdx.files.internal("Sounds/music.mp3"));
         musicaDeFundo.setLooping(true); // toca em loop
@@ -63,26 +67,33 @@ public class Cenario {
 
         batch.end();
         // Desenha o objeto
-        enemys.draw(delta, batch, moviment);
-        items.draw(delta, batch, moviment);
+        enemys.draw(delta, batch, this);
+        items.draw(delta, batch);
     }
 
     public void moverEsquerda(float delta, float screenWidth) {
-        backgroundPosX += backgroundSpeed * delta; // Movimentar o fundo para a esquerda
+        float deslocamento = backgroundSpeed * delta;
+        backgroundPosX += deslocamento;
 
-        // Se a posição do fundo for maior que a largura do fundo, reposicione
         if (backgroundPosX >= backgroundWidth) {
             backgroundPosX = 0;
         }
+
+        // Move inimigos e itens com o cenário
+        enemys.mover(deslocamento);
+        items.mover(deslocamento); // <- adiciona esta linha
     }
 
     public void moverDireita(float delta) {
-        backgroundPosX -= backgroundSpeed * delta; // Movimentar o fundo para a direita
+        float deslocamento = backgroundSpeed * delta;
+        backgroundPosX -= deslocamento;
 
-        // Se a posição do fundo for menor que a largura negativa, reposicione
         if (backgroundPosX <= -backgroundWidth) {
             backgroundPosX = 0;
         }
+
+        enemys.mover(-deslocamento);
+        items.mover(-deslocamento); // <- adicionado
     }
 
     public void setMoviment(boolean moviment) {
@@ -96,14 +107,21 @@ public class Cenario {
             Rectangle bichoRect = bicho.getBoundingBox();
             if (marioRect.overlaps(bichoRect)) {
                 if (!mario.isKilling()) {
-                    if (bicho.isMorto()) {
-                        if (bicho.isTartaruga()) {
+                    if (bicho.isMorto() && bicho.isTartaruga()) {
+                        if (!bicho.isDeslizando()) {
                             mario.bounce();
                             boolean marioEstaADireita = mario.getPosX() > bicho.getPosX();
                             bicho.iniciarDeslize(!marioEstaADireita); // Tartaruga desliza para lado oposto do Mario
                         }
+                        else if (mariosPorCimaBicho(mario, bicho)) {
+                            mario.bounce();
+                            bicho.pararDeslize();
+                        }
+                        else {
+                            mario.takeDamage();
+                        }
                     }
-                    else if (mario.getVelocidadeY() < 0 && mario.getBoundingBox().y > bicho.getBoundingBox().y + bicho.getBoundingBox().height * 0.5f) {
+                    else if (mariosPorCimaBicho(mario, bicho)) {
                         mario.bounce();
                         bicho.morrer();
                     } 
@@ -113,6 +131,10 @@ public class Cenario {
                 }
             }
         }
+    }
+
+    public boolean mariosPorCimaBicho(Mario mario, Bicho bicho) {
+        return mario.getVelocidadeY() < 0 && mario.getBoundingBox().y > bicho.getBoundingBox().y + bicho.getBoundingBox().height * 0.5f;
     }
 
     public void verificarColisaoEnemys() {
@@ -223,7 +245,7 @@ public class Cenario {
         }
     }
 
-    public boolean verificarSuporte(Mario mario) {
+    public boolean verificarSuporteMario(Mario mario) {
         Rectangle marioRect = mario.getBoundingBox();
 
         // Checa se há algum item logo abaixo do Mario
@@ -249,4 +271,65 @@ public class Cenario {
         return false;
     }
 
+    public boolean verificarSuporteBicho(Bicho bicho) {
+        Rectangle bichoRect = bicho.getBoundingBox();
+        float baseDoBicho = bichoRect.y; // parte inferior do bicho
+
+        for (Item item : items.getItens()) {
+            if (!item.isAtivo()) continue;
+
+            Rectangle itemRect = item.getBoundingBox();
+            float topoDoItem = itemRect.y + itemRect.height;
+
+            float margem = 2f; // tolerância ajustada
+
+            boolean alinhadoHorizontalmente =
+                bichoRect.x + bichoRect.width > itemRect.x &&
+                bichoRect.x < itemRect.x + itemRect.width;
+
+            boolean tocandoEmCima =
+                Math.abs(baseDoBicho - topoDoItem) <= margem;
+
+            if (alinhadoHorizontalmente && tocandoEmCima) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    public void verificarColisaoBichoComItens() {
+        Array<Bicho> bichos = enemys.getBichos();
+
+        for (int i = 0; i < bichos.size; i++) {
+            Bicho bicho = bichos.get(i);
+            if (!bicho.isAtivo()) continue;
+
+            Rectangle bichoRect = bicho.getBoundingBox();
+
+            for (Item item : items.getItens()) {
+                if (!item.isAtivo() || item.getTipo() == ItemType.MOEDA) continue;
+
+                Rectangle itemRect = item.getBoundingBox();
+
+                // Verifica colisão horizontal (lateral)
+                boolean colisaoLateral =
+                    bichoRect.overlaps(itemRect) &&
+                    (
+                        Math.abs(bichoRect.x + bichoRect.width - itemRect.x) < 5 ||
+                        Math.abs(itemRect.x + itemRect.width - bichoRect.x) < 5
+                    );
+
+                if (colisaoLateral) {
+                    if (bicho.isDeslizando()) {
+                        bicho.inverterDeslizamento();
+                    } else {
+                        Bicho invertido = bicho.inverterDirecao();
+                        bichos.set(i, invertido); // substitui o bicho
+                    }
+                    break; // já tratou colisão, sai do loop interno
+                }
+            }
+        }
+    }
 }

@@ -34,6 +34,7 @@ public class FirstScreen implements Screen {
         cenario.verificarColisao(mario);
         cenario.verificarColisaoEnemys();
         cenario.verificarColisaoComItens(mario);
+        cenario.verificarColisaoBichoComItens();
         draw(delta);
     }
 

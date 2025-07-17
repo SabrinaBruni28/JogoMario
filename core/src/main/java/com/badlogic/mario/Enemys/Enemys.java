@@ -3,17 +3,17 @@ package com.badlogic.mario.Enemys;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 import com.badlogic.gdx.math.MathUtils;
 import com.badlogic.gdx.utils.Array;
+import com.badlogic.mario.Cenario;
 
 public class Enemys {
     private final Array<Bicho> bichos = new Array<>();
     private float objectTimer = 0;
+    private float speed = 100f;
 
-    public void draw(float delta, SpriteBatch batch, boolean aumenta) {
-        float speed = aumenta ? 400f : 100f;
-
+    public void draw(float delta, SpriteBatch batch, Cenario cenario) {
         for (int i = bichos.size - 1; i >= 0; i--) {
             Bicho bicho = bichos.get(i);
-            bicho.update(delta);
+            bicho.update(delta, cenario);
 
             if (bicho.isAtivo()) {
                 bicho.draw(batch);
@@ -23,7 +23,7 @@ public class Enemys {
         }
 
         objectTimer += delta;
-        if (objectTimer > 5f) {
+        if (objectTimer > 10f) {
             objectTimer = 0;
             spawnEnemy(speed); // spawn automático
         }
@@ -47,5 +47,11 @@ public class Enemys {
 
     public Array<Bicho> getBichos() {
         return bichos;
+    }
+
+    public void mover(float dx) {
+        for (Bicho bicho : bichos) {
+            bicho.mover(dx);
+        }
     }
 }

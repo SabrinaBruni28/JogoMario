@@ -96,7 +96,7 @@ public class Mario {
         boolean isMoving = false;
         if (isJumping) isMoving = true;
 
-        boolean temSuporte = cenario.verificarSuporte(this);
+        boolean temSuporte = cenario.verificarSuporteMario(this);
         if (!isJumping && !temSuporte && posY > HEIGHT_Y) {
             setJumping(true); // Caiu de plataforma
         }
@@ -189,22 +189,29 @@ public class Mario {
 
         // Selecionar o frame atual com base no estado
         TextureRegion currentFrame = null;
+        float offsetY = 0, offsetX = 0;
         switch (currentState) {
             case STANDING_RIGHT:
                 currentFrame = standRightAnimation.getKeyFrame(stateTime, false);
                 sideRight = true;
+                offsetY = 5;
                 break;
             case STANDING_LEFT:
                 currentFrame = standLeftAnimation.getKeyFrame(stateTime, false);
                 sideRight = false;
+                offsetY = 5;
                 break;
             case STANDING_DOWN_RIGHT:
                 currentFrame = standDownRightAnimation.getKeyFrame(stateTime, false);
                 sideRight = true;
+                offsetY = - 18;
+                offsetX = - 15;
                 break;
             case STANDING_DOWN_LEFT:
                 currentFrame = standDownLeftAnimation.getKeyFrame(stateTime, false);
                 sideRight = false;
+                offsetY = - 18;
+                offsetX = 15;
                 break;
             case WALKING_RIGHT:
                 currentFrame = walkRightAnimation.getKeyFrame(stateTime, true);
@@ -225,7 +232,7 @@ public class Mario {
         }
 
         batch.begin();
-            batch.draw(currentFrame, posX, posY, widthMario, heightMario); // Desenhar na posição atual
+            batch.draw(currentFrame, posX + offsetX, posY + offsetY, widthMario, heightMario); // Desenhar na posição atual
         batch.end();
     }
 
@@ -308,7 +315,7 @@ public class Mario {
     }
 
     public void pararQueda(float yPisandoEmCima) {
-        this.posY = yPisandoEmCima - 5;
+        this.posY = yPisandoEmCima - 10;
         this.velocityY = 0; // ou o que quer que controle a gravidade
         this.isJumping = false;
         if (this.sideRight)
