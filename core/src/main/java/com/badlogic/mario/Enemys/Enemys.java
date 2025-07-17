@@ -1,9 +1,9 @@
 package com.badlogic.mario.Enemys;
 
-import com.badlogic.gdx.graphics.g2d.SpriteBatch;
-import com.badlogic.gdx.math.MathUtils;
-import com.badlogic.gdx.utils.Array;
 import com.badlogic.mario.Cenario;
+import com.badlogic.gdx.utils.Array;
+import com.badlogic.gdx.math.MathUtils;
+import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 
 public class Enemys {
     private final Array<Bicho> bichos = new Array<>();
@@ -17,7 +17,8 @@ public class Enemys {
 
             if (bicho.isAtivo()) {
                 bicho.draw(batch);
-            } else {
+            } 
+            else {
                 bichos.removeIndex(i);
             }
         }

@@ -1,16 +1,17 @@
 package com.badlogic.mario.Items;
 
+import com.badlogic.mario.Object;
+import com.badlogic.gdx.math.Rectangle;
 import com.badlogic.gdx.graphics.g2d.Animation;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 import com.badlogic.gdx.graphics.g2d.TextureRegion;
-import com.badlogic.gdx.math.Rectangle;
-import com.badlogic.mario.Object;
 
 public class Item {
     private Object itemObject;  // substitui sprite e animation
+    private ItemType tipo;
+
     private float stateTime = 0;
     private boolean ativo = true;
-    private ItemType tipo;
 
     public Item(TextureRegion[] frames, ItemType tipo, float posX, float posY, float width, float height) {
         this.tipo = tipo;

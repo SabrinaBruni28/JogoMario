@@ -1,28 +1,29 @@
 package com.badlogic.mario;
 
-import com.badlogic.gdx.utils.Array;
 import com.badlogic.gdx.Gdx;
+import com.badlogic.gdx.utils.Array;
 import com.badlogic.gdx.audio.Music;
 import com.badlogic.gdx.audio.Sound;
+import com.badlogic.mario.Items.Item;
+import com.badlogic.mario.Items.Items;
+import com.badlogic.mario.Mario.Mario;
+import com.badlogic.mario.Utils.CollisionUtils;
+import com.badlogic.mario.Enemys.Bicho;
+import com.badlogic.gdx.math.Rectangle;
+import com.badlogic.mario.Enemys.Enemys;
+import com.badlogic.mario.Items.ItemType;
 import com.badlogic.gdx.graphics.Texture;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
-import com.badlogic.gdx.math.Rectangle;
-import com.badlogic.mario.Enemys.Bicho;
-import com.badlogic.mario.Enemys.Enemys;
-import com.badlogic.mario.Items.Item;
-import com.badlogic.mario.Items.ItemType;
-import com.badlogic.mario.Items.Items;
 
 public class Cenario {
     private float backgroundPosX = 0; // Posição do fundo (cenário) no eixo X
     private float backgroundSpeed = 200; // Velocidade do movimento do fundo
     private float backgroundWidth = 1920; // Largura do fundo para controle da movimentação
     private float backgroundHeight = 1080; // Altura do fundo (supondo que seja 1080p)
-    private Texture background;
-    private boolean moviment = false;
-
-    public Enemys enemys;
+    
     public Items items;
+    public Enemys enemys;
+    private Texture background;
 
     private Music musicaDeFundo;
     private Sound somMoeda, somBatendo;
@@ -58,14 +59,13 @@ public class Cenario {
 
     public void draw(float delta, SpriteBatch batch) {
         batch.begin();
+            // Desenha a primeira parte do fundo
+            batch.draw(background, backgroundPosX, 0, backgroundWidth, backgroundHeight);
 
-        // Desenha a primeira parte do fundo
-        batch.draw(background, backgroundPosX, 0, backgroundWidth, backgroundHeight);
-
-        // Desenha a segunda parte do fundo quando o primeiro fundo sair da tela
-        batch.draw(background, backgroundPosX + backgroundWidth, 0, backgroundWidth, backgroundHeight);
-
+            // Desenha a segunda parte do fundo quando o primeiro fundo sair da tela
+            batch.draw(background, backgroundPosX + backgroundWidth, 0, backgroundWidth, backgroundHeight);
         batch.end();
+
         // Desenha o objeto
         enemys.draw(delta, batch, this);
         items.draw(delta, batch);
@@ -81,7 +81,7 @@ public class Cenario {
 
         // Move inimigos e itens com o cenário
         enemys.mover(deslocamento);
-        items.mover(deslocamento); // <- adiciona esta linha
+        items.mover(deslocamento);
     }
 
     public void moverDireita(float delta) {
@@ -93,11 +93,7 @@ public class Cenario {
         }
 
         enemys.mover(-deslocamento);
-        items.mover(-deslocamento); // <- adicionado
-    }
-
-    public void setMoviment(boolean moviment) {
-        this.moviment = moviment;
+        items.mover(-deslocamento);
     }
 
     public void verificarColisao(Mario mario) {
@@ -113,7 +109,7 @@ public class Cenario {
                             boolean marioEstaADireita = mario.getPosX() > bicho.getPosX();
                             bicho.iniciarDeslize(!marioEstaADireita); // Tartaruga desliza para lado oposto do Mario
                         }
-                        else if (mariosPorCimaBicho(mario, bicho)) {
+                        else if (CollisionUtils.isColisaoPorCima(marioRect, bichoRect)) {
                             mario.bounce();
                             bicho.pararDeslize();
                         }
@@ -121,7 +117,7 @@ public class Cenario {
                             mario.takeDamage();
                         }
                     }
-                    else if (mariosPorCimaBicho(mario, bicho)) {
+                    else if (CollisionUtils.isColisaoPorCima(marioRect, bichoRect)) {
                         mario.bounce();
                         bicho.morrer();
                     } 
@@ -131,10 +127,6 @@ public class Cenario {
                 }
             }
         }
-    }
-
-    public boolean mariosPorCimaBicho(Mario mario, Bicho bicho) {
-        return mario.getVelocidadeY() < 0 && mario.getBoundingBox().y > bicho.getBoundingBox().y + bicho.getBoundingBox().height * 0.5f;
     }
 
     public void verificarColisaoEnemys() {
@@ -187,14 +179,6 @@ public class Cenario {
 
             if (marioRect.overlaps(itemRect)) {
                 ItemType tipo = item.getTipo();
-                boolean vindoDaDireita = mario.getPosX() < itemRect.x &&
-                    marioRect.x + marioRect.width > itemRect.x;
-                boolean vindoDaEsquerda = mario.getPosX() > itemRect.x &&
-                    marioRect.x < itemRect.x + itemRect.width;
-                boolean vindoPorBaixo = mario.getVelocidadeY() > 0 &&
-                    marioRect.y + marioRect.height <= itemRect.y + 15f;
-                boolean vindoPorCima = mario.getVelocidadeY() <= 0 &&
-                    marioRect.y > itemRect.y + itemRect.height * 0.5f;
 
                 switch (tipo) {
                     case MOEDA:
@@ -205,34 +189,34 @@ public class Cenario {
 
                     case BLOCO:
                     case BLOCO_TIJOLO:
-                        if (vindoPorBaixo) {
+                        if (CollisionUtils.isColisaoPorBaixo(marioRect, itemRect)) {
                             mario.pararSubida(itemRect.y - marioRect.height);
                             somBatendo.play();
                         } 
-                        else if (vindoPorCima) {
+                        else if (CollisionUtils.isColisaoPorCima(marioRect, itemRect)) {
                             mario.pararQueda(itemRect.y + itemRect.height);
                         }
-                        else if (vindoDaDireita) {
+                        else if (CollisionUtils.isColisaoPelaDireita(marioRect, itemRect)) {
                             mario.bloquearDireita(itemRect.x - marioRect.width);
                         } 
-                        else if (vindoDaEsquerda) {
+                        else if (CollisionUtils.isColisaoPelaEsquerda(marioRect, itemRect)) {
                             mario.bloquearEsquerda(itemRect.x + itemRect.width);
                         }
                         break;
 
                     case CANO_VERDE:
                     case CANO_AMARELO:
-                        if (vindoPorBaixo) {
+                        if (CollisionUtils.isColisaoPorBaixo(marioRect, itemRect)) {
                             mario.pararSubida(itemRect.y - marioRect.height);
                             somBatendo.play();
                         } 
-                        if (vindoPorCima) {
+                        if (CollisionUtils.isColisaoPorCima(marioRect, itemRect)) {
                             mario.pararQueda(itemRect.y + itemRect.height);
                         }
-                        else if (vindoDaDireita) {
+                        else if (CollisionUtils.isColisaoPelaDireita(marioRect, itemRect)) {
                             mario.bloquearDireita(itemRect.x - marioRect.width);
                         } 
-                        else if (vindoDaEsquerda) {
+                        else if (CollisionUtils.isColisaoPelaEsquerda(marioRect, itemRect)) {
                             mario.bloquearEsquerda(itemRect.x + itemRect.width);
                         }
                         break;
@@ -255,14 +239,7 @@ public class Cenario {
             Rectangle itemRect = item.getBoundingBox();
 
             // Considera como suporte se a parte inferior do Mario estiver tocando ou quase tocando o item
-            float margem = 10f; // tolerância para contato com chão
-            boolean estaSobreItem = 
-                marioRect.y > itemRect.y + itemRect.height - margem &&
-                marioRect.y < itemRect.y + itemRect.height + margem &&
-                marioRect.x + marioRect.width > itemRect.x &&
-                marioRect.x < itemRect.x + itemRect.width;
-
-            if (estaSobreItem) {
+            if (CollisionUtils.estaSobreItem(marioRect, itemRect)) {
                 return true;
             }
         }
@@ -273,24 +250,13 @@ public class Cenario {
 
     public boolean verificarSuporteBicho(Bicho bicho) {
         Rectangle bichoRect = bicho.getBoundingBox();
-        float baseDoBicho = bichoRect.y; // parte inferior do bicho
 
         for (Item item : items.getItens()) {
             if (!item.isAtivo()) continue;
 
             Rectangle itemRect = item.getBoundingBox();
-            float topoDoItem = itemRect.y + itemRect.height;
 
-            float margem = 2f; // tolerância ajustada
-
-            boolean alinhadoHorizontalmente =
-                bichoRect.x + bichoRect.width > itemRect.x &&
-                bichoRect.x < itemRect.x + itemRect.width;
-
-            boolean tocandoEmCima =
-                Math.abs(baseDoBicho - topoDoItem) <= margem;
-
-            if (alinhadoHorizontalmente && tocandoEmCima) {
+            if (CollisionUtils.estaSobreItem(bichoRect, itemRect)) {
                 return true;
             }
         }
@@ -312,18 +278,14 @@ public class Cenario {
 
                 Rectangle itemRect = item.getBoundingBox();
 
-                // Verifica colisão horizontal (lateral)
-                boolean colisaoLateral =
-                    bichoRect.overlaps(itemRect) &&
-                    (
-                        Math.abs(bichoRect.x + bichoRect.width - itemRect.x) < 5 ||
-                        Math.abs(itemRect.x + itemRect.width - bichoRect.x) < 5
-                    );
-
-                if (colisaoLateral) {
+                if (
+                    CollisionUtils.isColisaoPelaDireita(bichoRect, itemRect) || 
+                    CollisionUtils.isColisaoPelaEsquerda(bichoRect, itemRect)
+                ) {
                     if (bicho.isDeslizando()) {
                         bicho.inverterDeslizamento();
-                    } else {
+                    }
+                    else {
                         Bicho invertido = bicho.inverterDirecao();
                         bichos.set(i, invertido); // substitui o bicho
                     }

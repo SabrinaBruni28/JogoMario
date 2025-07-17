@@ -1,48 +1,44 @@
-package com.badlogic.mario;
+package com.badlogic.mario.Mario;
 
 import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.Input;
 import com.badlogic.gdx.audio.Sound;
+import com.badlogic.gdx.math.Rectangle;
+import com.badlogic.mario.Cenario;
 import com.badlogic.gdx.graphics.Texture;
 import com.badlogic.gdx.graphics.g2d.Animation;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 import com.badlogic.gdx.graphics.g2d.TextureRegion;
-import com.badlogic.gdx.math.Rectangle;
 
 public class Mario {
-    private float stateTime = 0f; // Tempo de estado da animação
     private static final int FRAME_WIDTH = 29;  // Largura de cada sprite
     private static final int FRAME_HEIGHT = 40; // Altura de cada sprite
     private static final int HEIGHT_Y = 172;
-    private Texture spriteSheet;
-
-    private enum State {
-        STANDING_RIGHT, STANDING_LEFT, STANDING_DOWN_RIGHT, STANDING_DOWN_LEFT, WALKING_RIGHT, WALKING_LEFT, JUMPING_RIGHT, JUMPING_LEFT
-    }
-
+    
     private float posX = 10; // Posição inicial do personagem no eixo X
     private float posY = HEIGHT_Y; // Posição inicial do personagem no eixo Y
-
     private float widthMario = 130;
     private float heightMario = 180;
-    private float speed = 200; // Velocidade de movimento do personagem (pixels por segundo)
 
-    private boolean isJumping = false; // Verifica se o personagem está pulando
+    private float stateTime = 0f; // Tempo de estado da animação
+    private float speed = 200; // Velocidade de movimento do personagem (pixels por segundo)
     private float velocityY = 3f; // Velocidade vertical do personagem
     private float gravity = -900f; // Aceleração da gravidade (negativa porque puxa para baixo)
     private float jumpHeight = 600f; // A altura do pulo
-    private boolean sideRight = true;
 
-    private boolean invincible = false;       // Está no estado invencível?
     private float invincibleTime = 0f;        // Tempo que ele já está invencível
-    private static final float INVINCIBLE_DURATION = 2f; // Duração total da invencibilidade em segundos
-
     private float blinkInterval = 0.1f;       // Intervalo de piscar (a cada 0.1s ele alterna)
     private float blinkTimer = 0f;            // Timer para controlar o piscar
+    
     private boolean visible = true;           // Se está visível ou não no frame atual
+    private boolean sideRight = true;
+    private boolean isJumping = false; // Verifica se o personagem está pulando
     private boolean isKilling = false;
+    private boolean invincible = false;       // Está no estado invencível?
+    
+    private static final float INVINCIBLE_DURATION = 2f; // Duração total da invencibilidade em segundos
 
-    private State currentState = State.STANDING_RIGHT; // Estado atual do personagem
+    private MarioStates currentState = MarioStates.STANDING_RIGHT; // Estado atual do personagem
     private Animation<TextureRegion> standRightAnimation, standLeftAnimation;
     private Animation<TextureRegion> standDownRightAnimation, standDownLeftAnimation;
     private Animation<TextureRegion> walkRightAnimation, walkLeftAnimation;
@@ -56,7 +52,7 @@ public class Mario {
         somPulandoBicho = Gdx.audio.newSound(Gdx.files.internal("Sounds/stomp.mp3"));
 
         // Carregar a folha de sprites
-        spriteSheet = new Texture("smb_mario_sheet.png");
+        Texture spriteSheet = new Texture("smb_mario_sheet.png");
 
         // Dividir a folha de sprites em uma matriz de TextureRegion
         TextureRegion[][] spriteRegions = TextureRegion.split(spriteSheet, FRAME_WIDTH, FRAME_HEIGHT);
@@ -89,7 +85,7 @@ public class Mario {
     }
 
     public void dispose() {
-        spriteSheet.dispose();
+        //
     }
 
     public void input(float delta, Cenario cenario, float screenWidth, float screenHeight) {
@@ -101,27 +97,21 @@ public class Mario {
             setJumping(true); // Caiu de plataforma
         }
 
-
         // Limites da tela
-        if (posY < 100)
-            posY = 100;
-        else if (posY > screenHeight - heightMario)
-            posY = screenHeight - heightMario;
+        if (posY < 100) posY = 100;
+        else if (posY > screenHeight - heightMario) posY = screenHeight - heightMario;
 
         // Abaixar
         if (Gdx.input.isKeyPressed(Input.Keys.DOWN) && !isJumping) {
             isMoving = true;
-            if (!sideRight)
-                currentState = State.STANDING_DOWN_LEFT;
-            else
-                currentState = State.STANDING_DOWN_RIGHT;
+            currentState = sideRight ? MarioStates.STANDING_DOWN_RIGHT : MarioStates.STANDING_DOWN_LEFT;
             return;
         }
 
         // Movimento para a esquerda (pode mover mesmo pulando)
         if (Gdx.input.isKeyPressed(Input.Keys.LEFT)) {
             andarEsquerda(delta, screenWidth);
-            currentState = isJumping ? State.JUMPING_LEFT : State.WALKING_LEFT;
+            currentState = isJumping ? MarioStates.JUMPING_LEFT : MarioStates.WALKING_LEFT;
             isMoving = true;
         }
 
@@ -131,22 +121,17 @@ public class Mario {
 
             if (posX == screenWidth * 0.3f) {
                 cenario.moverDireita(delta);
-                cenario.setMoviment(true);
-            } else {
-                cenario.setMoviment(false);
             }
 
-            currentState = isJumping ? State.JUMPING_RIGHT : State.WALKING_RIGHT;
+            currentState = isJumping ? MarioStates.JUMPING_RIGHT : MarioStates.WALKING_RIGHT;
             isMoving = true;
-        } else {
-            cenario.setMoviment(false);
         }
 
         // Pular
         if (Gdx.input.isKeyPressed(Input.Keys.SPACE) && !isJumping) {
             long id = somPulando.play(); // Retorna o ID do som tocando
             somPulando.setVolume(id, 0.1f);
-            currentState = sideRight ? State.JUMPING_RIGHT : State.JUMPING_LEFT;
+            currentState = sideRight ? MarioStates.JUMPING_RIGHT : MarioStates.JUMPING_LEFT;
             velocityY = jumpHeight;
             isJumping = true;
             isMoving = true;
@@ -158,12 +143,13 @@ public class Mario {
 
         // Se não se move horizontalmente e não pula, fica parado
         if (!isMoving && !isJumping) {
-            currentState = sideRight ? State.STANDING_RIGHT : State.STANDING_LEFT;
+            currentState = sideRight ? MarioStates.STANDING_RIGHT : MarioStates.STANDING_LEFT;
         }
     }
 
     public void draw(SpriteBatch batch) {
         float delta = Gdx.graphics.getDeltaTime();
+        stateTime += delta;
 
         if (invincible) {
             invincibleTime += delta;
@@ -178,15 +164,13 @@ public class Mario {
                 invincible = false; // Acabou a invencibilidade
                 visible = true; // Garantir que termine visível
             }
-        } else {
+        } 
+        else {
             visible = true;
         }
 
         if (!visible) return; // Se invisível, não desenha (piscar)
         
-        // ... seu código normal para escolher currentFrame e desenhar
-        stateTime += delta;
-
         // Selecionar o frame atual com base no estado
         TextureRegion currentFrame = null;
         float offsetY = 0, offsetX = 0;
@@ -319,9 +303,9 @@ public class Mario {
         this.velocityY = 0; // ou o que quer que controle a gravidade
         this.isJumping = false;
         if (this.sideRight)
-            this.currentState = State.STANDING_RIGHT;
+            this.currentState = MarioStates.STANDING_RIGHT;
         else 
-            this.currentState = State.STANDING_LEFT;
+            this.currentState = MarioStates.STANDING_LEFT;
     }
     public void pararSubida(float yBatendoPorBaixo) {
         this.posY = yBatendoPorBaixo;

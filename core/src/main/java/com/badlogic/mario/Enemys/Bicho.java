@@ -1,57 +1,53 @@
 package com.badlogic.mario.Enemys;
 
 import com.badlogic.gdx.Gdx;
+import com.badlogic.mario.Object;
+import com.badlogic.mario.Cenario;
 import com.badlogic.gdx.audio.Sound;
+import com.badlogic.mario.Items.Item;
+import com.badlogic.gdx.math.Rectangle;
 import com.badlogic.gdx.graphics.Texture;
-import com.badlogic.gdx.graphics.g2d.Animation;
 import com.badlogic.gdx.graphics.g2d.Sprite;
+import com.badlogic.gdx.graphics.g2d.Animation;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 import com.badlogic.gdx.graphics.g2d.TextureRegion;
-import com.badlogic.gdx.math.Rectangle;
-import com.badlogic.mario.Cenario;
-import com.badlogic.mario.Object;
-import com.badlogic.mario.Items.Item;
 
 public class Bicho {
     private final Rectangle objectRectangle = new Rectangle();
-
-    private float stateTime = 0;
-    private float speed;
-    private boolean horizontal;
-    private float end;
-    private boolean sobeNoPonto;
-    private float pontoDeSubida;
-    private float alturaDeSubida;
-    private boolean jaSubiu = false;
-    private boolean ativo = true;
-    private boolean andandoParaDireita = false;
-    private boolean emSuporte = false;
+    private TextureRegion morteFrame;
+    
+    private Sound somMatando;
 
     private EnemyType tipo;
+    private Object enemy;
+
+    private float end;
+    private float speed;
+    private float stateTime = 0;
+    private float pontoDeSubida;
+    private float alturaDeSubida;
+    private float tempoMorte = 0;
+    private float velocidadeY = 0;
+    private float velocidadeDeslizamento = 0f;
+
+    private boolean horizontal;
+    private boolean sobeNoPonto;
+    private boolean ativo = true;
+    private boolean matar = false;
+    private boolean morto = false;
+    private boolean pulando = false;
+    private boolean jaSubiu = false;
+    private boolean emSuporte = false;
+    private boolean deslizando = false;
+    private boolean andandoParaDireita = false;
 
     private static final int FRAME_WIDTH = 30;
     private static final int FRAME_HEIGHT = 30;
     private static final int HEIGHT_Y = 172;
 
-    private Animation<TextureRegion> animation;
-    private TextureRegion[][] spriteRegions;
-    private Object enemy;
-
-    private TextureRegion morteFrame;
-    private boolean morto = false;
-    private boolean matar = false;
-    private float tempoMorte = 0f;
     private static final float TEMPO_MORTE = 0.5f; // tempo visível após morrer
-
-    private boolean deslizando = false;
-    private float velocidadeDeslizamento = 0f;
-
-    private boolean pulando = false;
-    private float velocidadeY = 0;
     private static final float GRAVIDADE = -800f;
     private static final float FORCA_PULO = 400f;
-
-    private Sound somMatando;
 
     public Bicho(
         int x1, int y1, int x2, int y2,
@@ -67,34 +63,32 @@ public class Bicho {
         EnemyType tipo,
         String arquivo
     ) {
-        // Carrega sprite sheet e configura animação
-        this.tipo = tipo;
-
         somMatando = Gdx.audio.newSound(Gdx.files.internal("Sounds/kick.wav"));
-
+    
+        // Carregaenemy.sprite sheet e configura animação
         Texture spriteSheet = new Texture(arquivo);
-        spriteRegions = TextureRegion.split(spriteSheet, FRAME_WIDTH, FRAME_HEIGHT);
-        animation = new Animation<>(0.4f, spriteRegions[x1][y1], spriteRegions[x2][y2]);
+        TextureRegion[][] spriteRegions = TextureRegion.split(spriteSheet, FRAME_WIDTH, FRAME_HEIGHT);
+        Animation<TextureRegion> animation = new Animation<>(0.4f, spriteRegions[x1][y1], spriteRegions[x2][y2]);
         animation.setPlayMode(Animation.PlayMode.LOOP);
-
-        // Sprite de morte
-        morteFrame = spriteRegions[xMorte][yMorte];
-
+        
+        //enemy.sprite de morte
+        this.morteFrame = spriteRegions[xMorte][yMorte];
+        
         // Cria o inimigo
-        Sprite sprite = new Sprite(animation.getKeyFrame(0));
-        sprite.setSize(100, 120);
-        sprite.setPosition(startX, startY);
+       Sprite sprite = new Sprite(animation.getKeyFrame(0));
+       sprite.setSize(100, 120);
+       sprite.setPosition(startX, startY);
         this.enemy = new Object(sprite, animation);
-
+        
         // Armazena parâmetros de lógica
-        this.horizontal = horizontal;
         this.end = end;
+        this.tipo = tipo;
         this.speed = speed;
+        this.horizontal = horizontal;
         this.sobeNoPonto = sobeNoPonto;
         this.pontoDeSubida = pontoDeSubida;
         this.alturaDeSubida = alturaDeSubida;
         this.andandoParaDireita = andandoParaDireita;
-
     }
 
     public void update(float delta, Cenario cenario) {
@@ -122,7 +116,7 @@ public class Bicho {
             tempoMorte += delta;
             
             if (enemy.sprite.getY() > HEIGHT_Y - 25 || velocidadeY != 0) {
-                boolean suporteChao = !deslizando && enemy.sprite.getY() <= HEIGHT_Y - 25;
+                boolean suporteChao = !deslizando &&enemy.sprite.getY() <= HEIGHT_Y - 25;
                 boolean suporteItem = !deslizando && !suporteChao && cenario.verificarSuporteBicho(this);
                 
                 if (!emSuporte) {
@@ -198,7 +192,7 @@ public class Bicho {
                 Math.abs(baseDoBicho - topoDoItem) <= margem;
 
             if (alinhadoHorizontalmente && tocandoEmCima) {
-                // Seta a Y do sprite para o topo do item
+                // Seta a Y doenemy.sprite para o topo do item
                 float novaY = topoDoItem;
                 enemy.sprite.setY(novaY);
                 emSuporte = true;
@@ -219,7 +213,7 @@ public class Bicho {
 
         batch.begin();
             if (!morto) {
-                TextureRegion frame = animation.getKeyFrame(stateTime, true);
+                TextureRegion frame = enemy.animation.getKeyFrame(stateTime, true);
                 enemy.sprite.setRegion(frame);
             } 
             else {
@@ -230,36 +224,35 @@ public class Bicho {
     }
 
     private void logic(float delta) {
-        Sprite sprite = enemy.sprite;
         float deslocamento = speed * delta;
 
         if (horizontal) {
             float direcao = andandoParaDireita ? 1f : -1f;
-            sprite.translateX(direcao * deslocamento);
+            enemy.sprite.translateX(direcao * deslocamento);
         }
         else {
             float direcao = andandoParaDireita ? 1f : -1f;
-            sprite.translateY(direcao * deslocamento);
+            enemy.sprite.translateY(direcao * deslocamento);
         }
 
-        objectRectangle.set(sprite.getX(), sprite.getY(), sprite.getWidth(), sprite.getHeight());
+        objectRectangle.set(enemy.sprite.getX(),enemy.sprite.getY(),enemy.sprite.getWidth(),enemy.sprite.getHeight());
 
         // Verifica subida (uma vez só)
         if (sobeNoPonto && !jaSubiu) {
-            if (horizontal && sprite.getX() <= pontoDeSubida) {
-                sprite.translateY(alturaDeSubida);
+            if (horizontal &&enemy.sprite.getX() <= pontoDeSubida) {
+               enemy.sprite.translateY(alturaDeSubida);
                 jaSubiu = true;
-            } else if (!horizontal && sprite.getY() <= pontoDeSubida) {
-                sprite.translateX(alturaDeSubida);
+            } else if (!horizontal &&enemy.sprite.getY() <= pontoDeSubida) {
+               enemy.sprite.translateX(alturaDeSubida);
                 jaSubiu = true;
             }
         }
 
         // Limite da tela
-        if (horizontal && sprite.getX() + sprite.getWidth() < end) {
+        if (horizontal &&enemy.sprite.getX() +enemy.sprite.getWidth() < end) {
             ativo = false;
             deslizando = false;
-        } else if (!horizontal && sprite.getY() + sprite.getHeight() < end) {
+        } else if (!horizontal &&enemy.sprite.getY() +enemy.sprite.getHeight() < end) {
             ativo = false;
             deslizando = false;
         }
@@ -270,7 +263,7 @@ public class Bicho {
         morto = true;
         deslizando = false;
         tempoMorte = 0;
-        enemy.sprite.setRegion(morteFrame);
+       enemy.sprite.setRegion(morteFrame);
     }
 
     public void matar() {
@@ -280,7 +273,7 @@ public class Bicho {
         tempoMorte = 0.2f;
         pulando = true;
         velocidadeY = FORCA_PULO; // começa o pulo
-        enemy.sprite.setRegion(morteFrame);
+       enemy.sprite.setRegion(morteFrame);
     }
 
     public Sprite getSprite() {
@@ -309,7 +302,7 @@ public class Bicho {
     }
 
     public void setPosX(float posX) {
-        enemy.sprite.setX(posX);
+       enemy.sprite.setX(posX);
     }
 
     public float getPosY() {
@@ -317,7 +310,7 @@ public class Bicho {
     }
 
     public void setPosY(float posY) {
-        enemy.sprite.setY(posY);
+       enemy.sprite.setY(posY);
     }
 
     public void setAtivo(boolean ativo) {
@@ -329,10 +322,10 @@ public class Bicho {
         float marginY = 10f;  // Reduz 5px de cada lado (vertical)
 
         objectRectangle.set(
-            enemy.sprite.getX() + marginX,
-            enemy.sprite.getY() + marginY,
-            enemy.sprite.getWidth() - marginX * 2,
-            enemy.sprite.getHeight() - marginY * 2
+           enemy.sprite.getX() + marginX,
+           enemy.sprite.getY() + marginY,
+           enemy.sprite.getWidth() - marginX * 2,
+           enemy.sprite.getHeight() - marginY * 2
         );
         return objectRectangle;
     }
@@ -346,24 +339,11 @@ public class Bicho {
     }
 
     public boolean isTartaruga() {
-        if (
-            isType(EnemyType.TARTARUGA_AZUL_L) || isType(EnemyType.TARTARUGA_VERDE_L) || isType(EnemyType.TARTARUGA_VERMELHA_L) ||
-            isType(EnemyType.TARTARUGA_AZUL_R) || isType(EnemyType.TARTARUGA_VERDE_R) || isType(EnemyType.TARTARUGA_VERMELHA_R)
-        ) 
-            return true;
-        
-        if (
-            isType(EnemyType.TARTARUGA_VOADORA_AZUL_L) || isType(EnemyType.TARTARUGA_VOADORA_VERDE_L) || isType(EnemyType.TARTARUGA_VOADORA_VERMELHA_L) ||
-            isType(EnemyType.TARTARUGA_VOADORA_AZUL_R) || isType(EnemyType.TARTARUGA_VOADORA_VERDE_R) || isType(EnemyType.TARTARUGA_VOADORA_VERMELHA_R)
-            
-        )
-            return true;
-        
-        return false;
+        return tipo.name().startsWith("TARTARUGA");
     }
 
     public void mover(float dx) {
-        enemy.sprite.setX(enemy.sprite.getX() + dx);
+       enemy.sprite.setX(enemy.sprite.getX() + dx);
     }
 
     public Bicho inverterDirecao() {

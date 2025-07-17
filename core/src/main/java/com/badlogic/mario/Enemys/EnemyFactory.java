@@ -151,36 +151,20 @@ public class EnemyFactory {
         );
     }
 
+    // Método para inverter o tipo do inimigo
     public static EnemyType inverterTipo(EnemyType tipo) {
-        switch (tipo) {
-            case TARTARUGA_VERDE_L: return EnemyType.TARTARUGA_VERDE_R;
-            case TARTARUGA_VERDE_R: return EnemyType.TARTARUGA_VERDE_L;
-
-            case TARTARUGA_VERMELHA_L: return EnemyType.TARTARUGA_VERMELHA_R;
-            case TARTARUGA_VERMELHA_R: return EnemyType.TARTARUGA_VERMELHA_L;
-
-            case TARTARUGA_AZUL_L: return EnemyType.TARTARUGA_AZUL_R;
-            case TARTARUGA_AZUL_R: return EnemyType.TARTARUGA_AZUL_L;
-
-            case TARTARUGA_VOADORA_VERDE_L: return EnemyType.TARTARUGA_VOADORA_VERDE_R;
-            case TARTARUGA_VOADORA_VERDE_R: return EnemyType.TARTARUGA_VOADORA_VERDE_L;
-
-            case TARTARUGA_VOADORA_VERMELHA_L: return EnemyType.TARTARUGA_VOADORA_VERMELHA_R;
-            case TARTARUGA_VOADORA_VERMELHA_R: return EnemyType.TARTARUGA_VOADORA_VERMELHA_L;
-
-            case TARTARUGA_VOADORA_AZUL_L: return EnemyType.TARTARUGA_VOADORA_AZUL_R;
-            case TARTARUGA_VOADORA_AZUL_R: return EnemyType.TARTARUGA_VOADORA_AZUL_L;
-
-            case BICHO_MARROM_L: return EnemyType.BICHO_MARROM_R;
-            case BICHO_MARROM_R: return EnemyType.BICHO_MARROM_L;
-
-            case BICHO_AZUL_L: return EnemyType.BICHO_AZUL_R;
-            case BICHO_AZUL_R: return EnemyType.BICHO_AZUL_L;
-
-            case BICHO_BRANCO_L: return EnemyType.BICHO_BRANCO_R;
-            case BICHO_BRANCO_R: return EnemyType.BICHO_BRANCO_L;
-
-            default: return tipo;
+        String nome = tipo.name();
+        if (nome.endsWith("_L")) {
+            String novoNome = nome.substring(0, nome.length() - 2) + "_R";
+            return EnemyType.valueOf(novoNome);
+        } 
+        else if (nome.endsWith("_R")) {
+            String novoNome = nome.substring(0, nome.length() - 2) + "_L";
+            return EnemyType.valueOf(novoNome);
+        } 
+        else {
+            // Caso o tipo não tenha lado explícito, retorna o mesmo
+            return tipo;
         }
     }
 }

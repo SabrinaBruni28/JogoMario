@@ -1,8 +1,8 @@
 package com.badlogic.mario.Items;
 
-import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 import com.badlogic.gdx.utils.Array;
 import com.badlogic.gdx.math.MathUtils;
+import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 
 public class Items {
     private static final int HEIGHT_Y = 172;
