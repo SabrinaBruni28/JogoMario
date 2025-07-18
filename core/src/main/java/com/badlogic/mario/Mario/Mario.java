@@ -283,7 +283,7 @@ public class Mario {
     }
 
     public Rectangle getBoundingBox() {
-        float marginX = 12f; // reduz largura em 12px no total
+        float marginX = 10; // reduz largura em 12px no total
         float marginY = 10f; // reduz altura em 8px no total
 
         return new Rectangle(
@@ -307,8 +307,10 @@ public class Mario {
         else 
             this.currentState = MarioStates.STANDING_LEFT;
     }
+
     public void pararSubida(float yBatendoPorBaixo) {
         this.posY = yBatendoPorBaixo;
+        this.velocityY = 0;
     }
 
     public void bloquearDireita(float novaPosX) {
@@ -317,6 +319,10 @@ public class Mario {
 
     public void bloquearEsquerda(float novaPosX) {
         this.posX = novaPosX;
+    }
+
+    public boolean getSideRight() {
+        return sideRight;
     }
 
 }

@@ -7,7 +7,6 @@ import com.badlogic.gdx.audio.Sound;
 import com.badlogic.mario.Items.Item;
 import com.badlogic.mario.Items.Items;
 import com.badlogic.mario.Mario.Mario;
-import com.badlogic.mario.Utils.CollisionUtils;
 import com.badlogic.mario.Enemys.Bicho;
 import com.badlogic.gdx.math.Rectangle;
 import com.badlogic.mario.Enemys.Enemys;
@@ -109,7 +108,7 @@ public class Cenario {
                             boolean marioEstaADireita = mario.getPosX() > bicho.getPosX();
                             bicho.iniciarDeslize(!marioEstaADireita); // Tartaruga desliza para lado oposto do Mario
                         }
-                        else if (CollisionUtils.isColisaoPorCima(marioRect, bichoRect)) {
+                        else if (mariosPorCimaBicho(mario, bicho)) {
                             mario.bounce();
                             bicho.pararDeslize();
                         }
@@ -117,7 +116,7 @@ public class Cenario {
                             mario.takeDamage();
                         }
                     }
-                    else if (CollisionUtils.isColisaoPorCima(marioRect, bichoRect)) {
+                    else if (mariosPorCimaBicho(mario, bicho)) {
                         mario.bounce();
                         bicho.morrer();
                     } 
@@ -127,6 +126,10 @@ public class Cenario {
                 }
             }
         }
+    }
+
+    public boolean mariosPorCimaBicho(Mario mario, Bicho bicho) {
+        return mario.getVelocidadeY() < 0 && mario.getBoundingBox().y > bicho.getBoundingBox().y + bicho.getBoundingBox().height * 0.5f;
     }
 
     public void verificarColisaoEnemys() {
@@ -179,6 +182,14 @@ public class Cenario {
 
             if (marioRect.overlaps(itemRect)) {
                 ItemType tipo = item.getTipo();
+                boolean vindoDaDireita = mario.getPosX() < itemRect.x &&
+                    marioRect.x + marioRect.width > itemRect.x;
+                boolean vindoDaEsquerda = mario.getPosX() > itemRect.x &&
+                    marioRect.x < itemRect.x + itemRect.width;
+                boolean vindoPorBaixo = mario.getVelocidadeY() > 0 &&
+                    marioRect.y + marioRect.height <= itemRect.y + 15f;
+                boolean vindoPorCima = mario.getVelocidadeY() <= 0 &&
+                    marioRect.y > itemRect.y + itemRect.height * 0.5f;
 
                 switch (tipo) {
                     case MOEDA:
@@ -189,34 +200,34 @@ public class Cenario {
 
                     case BLOCO:
                     case BLOCO_TIJOLO:
-                        if (CollisionUtils.isColisaoPorBaixo(marioRect, itemRect)) {
+                        if (vindoPorBaixo) {
                             mario.pararSubida(itemRect.y - marioRect.height);
                             somBatendo.play();
                         } 
-                        else if (CollisionUtils.isColisaoPorCima(marioRect, itemRect)) {
+                        else if (vindoPorCima) {
                             mario.pararQueda(itemRect.y + itemRect.height);
                         }
-                        else if (CollisionUtils.isColisaoPelaDireita(marioRect, itemRect)) {
+                        else if (vindoDaDireita && mario.getSideRight()) {
                             mario.bloquearDireita(itemRect.x - marioRect.width);
                         } 
-                        else if (CollisionUtils.isColisaoPelaEsquerda(marioRect, itemRect)) {
+                        else if (vindoDaEsquerda && !mario.getSideRight()) {
                             mario.bloquearEsquerda(itemRect.x + itemRect.width);
                         }
                         break;
 
                     case CANO_VERDE:
                     case CANO_AMARELO:
-                        if (CollisionUtils.isColisaoPorBaixo(marioRect, itemRect)) {
+                        if (vindoPorBaixo) {
                             mario.pararSubida(itemRect.y - marioRect.height);
                             somBatendo.play();
                         } 
-                        if (CollisionUtils.isColisaoPorCima(marioRect, itemRect)) {
+                        else if (vindoPorCima) {
                             mario.pararQueda(itemRect.y + itemRect.height);
                         }
-                        else if (CollisionUtils.isColisaoPelaDireita(marioRect, itemRect)) {
+                        else if (vindoDaDireita && mario.getSideRight()) {
                             mario.bloquearDireita(itemRect.x - marioRect.width);
                         } 
-                        else if (CollisionUtils.isColisaoPelaEsquerda(marioRect, itemRect)) {
+                        else if (vindoDaEsquerda && !mario.getSideRight()) {
                             mario.bloquearEsquerda(itemRect.x + itemRect.width);
                         }
                         break;
@@ -239,7 +250,14 @@ public class Cenario {
             Rectangle itemRect = item.getBoundingBox();
 
             // Considera como suporte se a parte inferior do Mario estiver tocando ou quase tocando o item
-            if (CollisionUtils.estaSobreItem(marioRect, itemRect)) {
+            float margem = 10f; // tolerância para contato com chão
+            boolean estaSobreItem = 
+                marioRect.y > itemRect.y + itemRect.height - margem &&
+                marioRect.y < itemRect.y + itemRect.height + margem &&
+                marioRect.x + marioRect.width > itemRect.x &&
+                marioRect.x < itemRect.x + itemRect.width;
+
+            if (estaSobreItem) {
                 return true;
             }
         }
@@ -250,13 +268,24 @@ public class Cenario {
 
     public boolean verificarSuporteBicho(Bicho bicho) {
         Rectangle bichoRect = bicho.getBoundingBox();
+        float baseDoBicho = bichoRect.y; // parte inferior do bicho
 
         for (Item item : items.getItens()) {
             if (!item.isAtivo()) continue;
 
             Rectangle itemRect = item.getBoundingBox();
+            float topoDoItem = itemRect.y + itemRect.height;
 
-            if (CollisionUtils.estaSobreItem(bichoRect, itemRect)) {
+            float margem = 2f; // tolerância ajustada
+
+            boolean alinhadoHorizontalmente =
+                bichoRect.x + bichoRect.width > itemRect.x &&
+                bichoRect.x < itemRect.x + itemRect.width;
+
+            boolean tocandoEmCima =
+                Math.abs(baseDoBicho - topoDoItem) <= margem;
+
+            if (alinhadoHorizontalmente && tocandoEmCima) {
                 return true;
             }
         }
@@ -278,14 +307,18 @@ public class Cenario {
 
                 Rectangle itemRect = item.getBoundingBox();
 
-                if (
-                    CollisionUtils.isColisaoPelaDireita(bichoRect, itemRect) || 
-                    CollisionUtils.isColisaoPelaEsquerda(bichoRect, itemRect)
-                ) {
+                // Verifica colisão horizontal (lateral)
+                boolean colisaoLateral =
+                    bichoRect.overlaps(itemRect) &&
+                    (
+                        Math.abs(bichoRect.x + bichoRect.width - itemRect.x) < 5 ||
+                        Math.abs(itemRect.x + itemRect.width - bichoRect.x) < 5
+                    );
+
+                if (colisaoLateral) {
                     if (bicho.isDeslizando()) {
                         bicho.inverterDeslizamento();
-                    }
-                    else {
+                    } else {
                         Bicho invertido = bicho.inverterDirecao();
                         bichos.set(i, invertido); // substitui o bicho
                     }

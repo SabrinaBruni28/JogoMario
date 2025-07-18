@@ -318,7 +318,7 @@ public class Bicho {
     }
 
     public Rectangle getBoundingBox() {
-        float marginX = 12f; // Reduz 10px de cada lado (horizontal)
+        float marginX = 10f; // Reduz 10px de cada lado (horizontal)
         float marginY = 10f;  // Reduz 5px de cada lado (vertical)
 
         objectRectangle.set(

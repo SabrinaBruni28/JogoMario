@@ -58,8 +58,8 @@ public class Item {
 
     // Adicione no Item.java
     public Rectangle getBoundingBox() {
-        float marginX = 12f; // reduz largura em 12px no total
-        float marginY = 12f; // reduz altura em 8px no total
+        float marginX = 10f; // reduz largura em 12px no total
+        float marginY = 10f; // reduz altura em 8px no total
 
         return new Rectangle(
             itemObject.sprite.getX() + marginX,
